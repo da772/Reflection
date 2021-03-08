@@ -1,0 +1,14 @@
+*.a
+.vscode/
+.vs/
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+.bin/
+.obj/
+/bin/
+/obj/
+Makefile
+*.make
+.DS_Store
