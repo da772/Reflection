@@ -20,13 +20,14 @@ workspace "Reflection"
         {
             "src/**.cpp",
             "src/**.c",
-	    "tests/**.cpp",
-	    "test/**.hpp",
+            "tests/**.cpp",
+            "tests/**.hpp",
+            "tests/**.h",
         }
 
         includedirs 
         {
-       	    "include"	
+       	    "include"
         }
 
         filter "configurations:Debug"
