@@ -16,9 +16,22 @@ namespace refl {
 }
 
 template<typename T>
-T GetPtrVar(void* v, const std::string& scriptName, const std::string& name, const std::unordered_map<std::string,refl::store::uobject_struct>& map) {
-	uintptr_t o = map.at(scriptName).property_map.at(name).offset;
+T GetPtrVar(void* v, const std::string& clazz, const std::string& name) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+	uintptr_t o = map.at(clazz).property_map.at(name).offset;
 	return *(T*)((uint8_t*)v + o);
+}
+
+template<typename T>
+void SetPtrVar(void* v, const std::string& clazz, const std::string& name, T value) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+	uintptr_t o = map.at(clazz).property_map.at(name).offset;
+	*(T*)((uint8_t*)v + o) = value;
+}
+
+template<typename T, typename ... Args >
+T CallPtrFunction(void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
+
 }
 
 int main() {
@@ -76,14 +89,16 @@ int main() {
 	std::cout << std::to_string(*i) << std::endl;
 
 	//int pp = GetPtrVar<int>(v, "TestScript", "int2", map);
-
 	
 
 	v = map.at("TestScript").function_map.at("~constructor").function(v, {});
 
 	void* v1 = map.at("TestScript").function_map.at("constructor").function(nullptr, {});
-	int pp = GetPtrVar<int>(v1, "TestScript", "int2", map);
-
+	int pp = GetPtrVar<int>(v1, "TestScript", "int2");
+	
+	std::cout << std::to_string(pp) << std::endl;
+	SetPtrVar<int>(v1, "TestScript", "int2", 23);
+	pp = GetPtrVar<int>(v1, "TestScript", "int2");
 	std::cout << std::to_string(pp) << std::endl;
 
 	v1 = map.at("TestScript").function_map.at("~constructor").function(v1, {});
