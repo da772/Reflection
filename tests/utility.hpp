@@ -6,6 +6,7 @@
 #include <locale>
 #include <codecvt>
 #include <WS2tcpip.h>
+#include <algorithm>
 #endif
 
 #if defined(__APPLE__)
@@ -70,9 +71,9 @@ inline std::string GetExecutablePath() {
 		const std::string& exePath = GetExecutableDir();
 		std::string dirPath = exePath;
 
-#if defined(__APPLE__) || defined(__linux__)
+
         levelsUp+=3;
-#endif
+
 		for (int i = 0; i < levelsUp; i++) {
 			uint32_t slash = (uint32_t)dirPath.find_last_of("/\\");
 			if (slash >= 0) {

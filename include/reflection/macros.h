@@ -1,8 +1,8 @@
 #pragma once
-#define UCLASS(x)
-#define UCLASS_BODY(x)
+#define UCLASS()
+#define UCLASS_BODY()
 #define UENUM
 #define UENUM_BODY
-#define UPROPERTY(x)
-#define UFUNCTION(x)
+#define UPROPERTY()
+#define UFUNCTION()
 

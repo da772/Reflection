@@ -170,14 +170,14 @@ namespace refl {
 
 					if (uclassPos == std::string::npos) {
 						err->setErrorStr("Error 0: UCLASS not found");
-						return nullptr;
+						return "";
 					}
 
 					size_t classPos = in.find("class ", uclassPos+7);
 
 					if (classPos == std::string::npos) {
 						err->setErrorStr("Error 1: class not found");
-						return nullptr;
+						return "";
 					}
 
 					size_t clssStart = classPos+6;
