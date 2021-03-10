@@ -169,6 +169,8 @@ static void Benchmark() {
 	}
 	std::cout << "REFLECTION: " << ns / (double)testSize << "ms NATIVE: " << n / (double)testSize << " ms" << std::endl;
 
+	std::cout << (ns < n ? "REFLECTION " : "NATIVE ") << " is " << (ns < n ? n / ns : ns / n) << "x faster" << std::endl;
+
 	reflector.UnloadGeneratedFiles();
 #endif
 }
