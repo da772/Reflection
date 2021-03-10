@@ -58,8 +58,8 @@ namespace refl {
 				return _CallFunction<T>(name, vec);
 			}
 
-			template<typename ... Args >
-			inline void CallFunction(const std::string& name, Args&& ... args) {
+			template<typename ... Args>
+			inline void CallVoidFunction(const std::string& name, Args&& ... args) {
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 				std::vector<void*> vec = {(void*)&args...};
 				void* f = map.at(clazz).function_map.at(name).function(ptr, vec);
