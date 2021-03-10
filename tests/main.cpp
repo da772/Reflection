@@ -15,6 +15,12 @@ namespace refl {
 	extern void UnloadGeneratedFiles();
 }
 
+template<typename T>
+T GetPtrVar(void* v, const std::string& scriptName, const std::string& name, const std::unordered_map<std::string,refl::store::uobject_struct>& map) {
+	uintptr_t o = map.at(scriptName).property_map.at(name).offset;
+	return *(T*)((uint8_t*)v + o);
+}
+
 int main() {
 	refl::reflector* reflector = refl::reflector::Get();
 
@@ -63,9 +69,25 @@ int main() {
 
 	int* _f = (int*)map.at("TestScript").function_map.at("GetNumber").function(v, {(void*)&_i, (void*)&b});
 	std::cout << std::to_string(*_f) << std::endl;
-	free _f;
-	map.at("TestScript").function_map.at("~constructor").function(v, {});
+	free(_f);
 
+	o = map.at("TestScript").property_map.at("numberptr").offset;
+	i = *((int**)((uint8_t*)v + o));
+	std::cout << std::to_string(*i) << std::endl;
+
+	//int pp = GetPtrVar<int>(v, "TestScript", "int2", map);
+
+	
+
+	v = map.at("TestScript").function_map.at("~constructor").function(v, {});
+
+	void* v1 = map.at("TestScript").function_map.at("constructor").function(nullptr, {});
+	int pp = GetPtrVar<int>(v1, "TestScript", "int2", map);
+
+	std::cout << std::to_string(pp) << std::endl;
+
+	v1 = map.at("TestScript").function_map.at("~constructor").function(v1, {});
+	
 	refl::UnloadGeneratedFiles();
 #endif
 	refl::reflector::Destroy();

@@ -13,7 +13,7 @@ class TestScript : public NativeScript {
     UCLASS_BODY()
     public:
     UFUNCTION()
-    inline TestScript() { std::cout << "TEST SCRIPT CREATED" << std::endl;};
+    inline TestScript() { std::cout << "TEST SCRIPT CREATED" << std::endl; };
     inline ~TestScript() { std::cout << "TEST SCRIPT DESTROYED" << std::endl;};
 
    
@@ -27,7 +27,7 @@ class TestScript : public NativeScript {
     UPROPERTY()
     int int2 = -20;
     UPROPERTY()
-    int *numberptr = 0;
+    int *numberptr = &int1;
     UPROPERTY()
     char char1 = 'a';
     UPROPERTY()
