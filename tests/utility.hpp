@@ -19,6 +19,12 @@
 #include <unistd.h>
 #endif
 
+#include <chrono>
+
+inline uint64_t GetTimeNS() {
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();;
+}
+
 inline std::string GetExecutablePath() {
 #if defined(_WIN32 )
 #pragma warning(push)

@@ -13,9 +13,9 @@ class TestScript : public NativeScript {
     UCLASS_BODY()
     public:
     UCONSTRUCTOR()
-    inline TestScript() { std::cout << "TEST SCRIPT CREATED" << std::endl; };
+    inline TestScript() {  };
     
-    inline ~TestScript() { std::cout << "TEST SCRIPT DESTROYED" << std::endl;};
+    inline ~TestScript() { };
 
    
     UFUNCTION()
@@ -57,7 +57,7 @@ class TestScript : public NativeScript {
 
     UFUNCTION()
     inline int GetNumber(int i, bool b) { 
-        std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
+       // std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
          if (b) return i; 
          else return -i;
         };
@@ -69,7 +69,7 @@ class TestScript : public NativeScript {
 
     UFUNCTION()
     inline std::string GetString() {
-        std::cout <<"GETTING STRING" << std::endl;
+        //std::cout <<"GETTING STRING" << std::endl;
         return "MyString";
     }
 

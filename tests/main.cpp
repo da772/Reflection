@@ -72,14 +72,22 @@ void CallPtrFunction(::refl::store::storage* store, void* v, const std::string& 
 	return;
 }
 
+static void Benchmark();
 
 int main() {
+	
+	Benchmark();
+
+	return 0;
+};
+
+static void Benchmark() {
 	refl::reflector reflector = refl::reflector();
 
-	reflector.SetErrorCallback([](const char* c){ std::cout << c << std::endl;});
-	reflector.SetOutputDir((GetParentExecuteableDir(0)+std::string("tests/scripts/Generated/")).c_str());
+	reflector.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
+	reflector.SetOutputDir((GetParentExecuteableDir(0) + std::string("tests/scripts/Generated/")).c_str());
 
-	std::string in = GetParentExecuteableDir(0)+"tests/scripts/TestScript.h";
+	std::string in = GetParentExecuteableDir(0) + "tests/scripts/TestScript.h";
 	std::ifstream t(in);
 	std::stringstream buffer;
 	buffer << t.rdbuf();
@@ -93,52 +101,74 @@ int main() {
 	}
 	//std::cout << (out ? out : reflector->GetError()) << std::endl;
 	// RELOAD DLL
-	
+
 #else
 	refl::store::storage* storage = reflector.GetStorage();
 	reflector.LoadGeneratedFiles();
-	
-	const std::unordered_map<std::string,refl::store::uobject_struct>& map = storage->get_map();
+
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = storage->get_map();
 	std::cout << "PRINTING MAP : " << map.size() << std::endl;
+
 	for (const std::pair<std::string, refl::store::uobject_struct>& p : map) {
 		std::string s = p.first;
-		for (const std::pair<std::string,refl::store::uproperty_struct>& _p : p.second.property_map) {
-			s += " " + _p.second.name + ", "+_p.second.type_name + ", " + std::to_string(_p.second.offset) + " | ";
+		for (const std::pair<std::string, refl::store::uproperty_struct>& _p : p.second.property_map) {
+			s += " " + _p.second.name + ", " + _p.second.type_name + ", " + std::to_string(_p.second.offset) + " | ";
 		}
 		s += "\n";
-		for (const std::pair<std::string,refl::store::ufunction_struct>& _p : p.second.function_map) {
-			s+= _p.first +"\n";
+		for (const std::pair<std::string, refl::store::ufunction_struct>& _p : p.second.function_map) {
+			s += _p.first + "\n";
 		}
 		std::cout << s << std::endl;
 	}
-	{
-		refl::uClass uClss = reflector.CreateUClass("TestScript");
-		void* v1 = uClss.data();
-		
-		int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
-		int* getInt2 = uClss.CallFunction<int*>("GetInt2");//CallPtrFunction<int*>(storage, v1, "TestScript", "GetInt2");
-		std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
-		
-		std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
-		*getInt2 = 55;
-		std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+	double ns = 0;
+	double n = 0;
+	int testSize = 100000;
+	for (int i = 0; i < testSize; i++) {
+		{
+			uint64_t time = GetTimeNS();
+			refl::uClass uClss = reflector.CreateUClass("TestScript");
+			//void* v1 = uClss.data();
 
-		
-		std::string getString = uClss.CallFunction<std::string>("GetString");
-		std::cout << getString << std::endl;
-		std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-		std::cout << *getStringPtr << std::endl;
-		*getStringPtr = "NEW STRING";
-		getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-		std::cout << *getStringPtr << std::endl;
-		void* getStruct = uClss.CallFunction<void*>("GetStruct");
-		TestStruct* ts = (TestStruct*)getStruct;
-		std::cout << ts->i << std::endl;
-		delete ts;
+			int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
+			int* getInt2 = uClss.CallFunction<int*>("GetInt2");//CallPtrFunction<int*>(storage, v1, "TestScript", "GetInt2");
+			//std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
+
+			//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+			*getInt2 = 55;
+			//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+
+
+			std::string getString = uClss.CallFunction<std::string>("GetString");
+			//std::cout << getString << std::endl;
+			std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+			//std::cout << *getStringPtr << std::endl;
+			*getStringPtr = "NEW STRING";
+			getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+			//std::cout << *getStringPtr << std::endl;
+			TestStruct getStruct = uClss.CallFunction<TestStruct>("GetStruct");
+			//std::cout << ts->i << std::endl;
+			time = GetTimeNS() - time;
+			//std::cout << "\n\n" << (double)time / 1e6 << " ms | " << time << " ns\n\n" << std::endl;
+			ns += (double)time / 1e6;
+		}
+		{
+			uint64_t time = GetTimeNS();
+			TestScript* t = new TestScript();
+			int getNum = t->GetNumber(832, false);
+			int* getInt2 = t->GetInt2();
+			*getInt2 = 55;
+			std::string getString = t->GetString();
+			std::string* getStringPtr = t->GetStringPtr();
+			*getStringPtr = "NEW STRING";
+			getStringPtr = t->GetStringPtr();
+			TestStruct getStruct = t->GetStruct();
+			time = GetTimeNS() - time;
+			n += (double)time / 1e6;
+			//std::cout << "\n\n" << (double)time / 1e6 << " ms | " << time << " ns\n\n" << std::endl;
+		}
 	}
-	
+	std::cout << "REFLECTION: " << ns / (double)testSize << "ms NATIVE: " << n / (double)testSize << " ms" << std::endl;
+
 	reflector.UnloadGeneratedFiles();
 #endif
-
-	return 0;
-};
+}
