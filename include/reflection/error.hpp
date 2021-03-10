@@ -29,10 +29,15 @@ namespace refl {
                         memcpy(err_str, str, sizeof(char)*err_len);
                         err_str[err_len-1] = '\0';
                     }
+                    if (f) {
+                        f(err_str);
+                    }
                 }
+                inline void setErrorCallback(void(*_f)(const char*)) { f = _f; }
                 inline const char* GetError() { bHasError = false; return err_str; }
                 inline bool HasError() const {return bHasError; }
             private:
+                void(*f)(const char*) = nullptr;
                 bool bHasError = false;
                 char* err_str = nullptr; 
                 size_t err_len;

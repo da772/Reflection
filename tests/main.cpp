@@ -14,29 +14,26 @@
 #define ADDR(x) reinterpret_cast<uintptr_t>(x)
 
 
-namespace refl {
-	extern void LoadGeneratedFiles();
-	extern void UnloadGeneratedFiles();
-}
+
 
 template<typename T>
-T GetPtrVar(void* v, const std::string& clazz, const std::string& name) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+T GetPtrVar(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 	uintptr_t o = map.at(clazz).property_map.at(name).offset;
 	return *(T*)((uint8_t*)v + o);
 }
 
 template<typename T>
-void SetPtrVar(void* v, const std::string& clazz, const std::string& name, T value) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+void SetPtrVar(::refl::store::storage* store,void* v, const std::string& clazz, const std::string& name, T value) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 	uintptr_t o = map.at(clazz).property_map.at(name).offset;
 	*(T*)((uint8_t*)v + o) = value;
 }
 
 
 template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
-T _CallPtrFunction(void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+T _CallPtrFunction(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 	
 	std::cout<< name << " NOT POINTER" << std::endl;
 	T* _f = (T*)map.at(clazz).function_map.at(name).function(v, vec);
@@ -46,8 +43,8 @@ T _CallPtrFunction(void* v, const std::string& clazz, const std::string& name, c
 }
 
 template <typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
-T _CallPtrFunction(void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+T _CallPtrFunction(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 
 	std::cout<< name << " POINTER" << std::endl;
 	void* _f = map.at(clazz).function_map.at(name).function(v, vec);
@@ -57,14 +54,14 @@ T _CallPtrFunction(void* v, const std::string& clazz, const std::string& name, c
 }
 
 template<typename T, typename ... Args>
-T CallPtrFunction(void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
+T CallPtrFunction(::refl::store::storage* store,void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
 	std::vector<void*> vec = {(void*)&args...};
-	return _CallPtrFunction<T>(v, clazz, name, vec);
+	return _CallPtrFunction<T>(store, v, clazz, name, vec);
 }
 
 template<typename ... Args >
-void CallPtrFunction(void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+void CallPtrFunction(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 	std::vector<void*> vec = {(void*)&args...};
 	void* f = map.at(clazz).function_map.at(name).function(v, vec);
 	::refl::store::uproperty_type ret_type = map.at(clazz).function_map.at(name).ret_val;
@@ -77,9 +74,10 @@ void CallPtrFunction(void* v, const std::string& clazz, const std::string& name,
 
 
 int main() {
-	refl::reflector* reflector = refl::reflector::Get();
+	refl::reflector reflector = refl::reflector();
 
-	reflector->SetOutputDir((GetParentExecuteableDir(0)+std::string("tests/scripts/Generated/")).c_str());
+	reflector.SetErrorCallback([](const char* c){ std::cout << c << std::endl;});
+	reflector.SetOutputDir((GetParentExecuteableDir(0)+std::string("tests/scripts/Generated/")).c_str());
 
 	std::string in = GetParentExecuteableDir(0)+"tests/scripts/TestScript.h";
 	std::ifstream t(in);
@@ -89,21 +87,19 @@ int main() {
 #if 0
 	//std::string out = GetParentExecuteableDir(0)+"scripts/TestScript.generated.h";
 	std::cout << in << std::endl;
-	reflector->Generate(in.c_str());
-	if (reflector->HasError()) {
-		std::cout << reflector->GetError();
+	reflector.Generate(in.c_str());
+	if (reflector.HasError()) {
+		std::cout << reflector.GetError();
 	}
 	//std::cout << (out ? out : reflector->GetError()) << std::endl;
-
 	// RELOAD DLL
 	
 #else
-	refl::LoadGeneratedFiles();
+	refl::store::storage* storage = reflector.GetStorage();
+	reflector.LoadGeneratedFiles();
 	
-	refl::store::storage* storage = reflector->GetStorage();
-
 	const std::unordered_map<std::string,refl::store::uobject_struct>& map = storage->get_map();
-
+	std::cout << "PRINTING MAP : " << map.size() << std::endl;
 	for (const std::pair<std::string, refl::store::uobject_struct>& p : map) {
 		std::string s = p.first;
 		for (const std::pair<std::string,refl::store::uproperty_struct>& _p : p.second.property_map) {
@@ -115,32 +111,34 @@ int main() {
 		}
 		std::cout << s << std::endl;
 	}
+	{
+		refl::uClass uClss = reflector.CreateUClass("TestScript");
+		void* v1 = uClss.data();
+		
+		int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
+		int* getInt2 = uClss.CallFunction<int*>("GetInt2");//CallPtrFunction<int*>(storage, v1, "TestScript", "GetInt2");
+		std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
+		
+		std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+		*getInt2 = 55;
+		std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
 
-	void* v1 = CallPtrFunction<void*>(v1, "TestScript", "constructor");
+		
+		std::string getString = uClss.CallFunction<std::string>("GetString");
+		std::cout << getString << std::endl;
+		std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+		std::cout << *getStringPtr << std::endl;
+		*getStringPtr = "NEW STRING";
+		getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+		std::cout << *getStringPtr << std::endl;
+		void* getStruct = uClss.CallFunction<void*>("GetStruct");
+		TestStruct* ts = (TestStruct*)getStruct;
+		std::cout << ts->i << std::endl;
+		delete ts;
+	}
 	
-	int getNum = CallPtrFunction<int>(v1, "TestScript", "GetNumber", 823, false);
-	int* getInt2 = CallPtrFunction<int*>(v1, "TestScript", "GetInt2");
-	std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
-	int _f = *getInt2;
-	std::cout << "GET INT = " << std::to_string(_f) << std::endl;
-	std::string getString = CallPtrFunction<std::string>(v1, "TestScript", "GetString");
-	std::cout << getString << std::endl;
-	std::string* getStringPtr = CallPtrFunction<std::string*>(v1, "TestScript", "GetStringPtr");
-	std::cout << *getStringPtr << std::endl;
-	*getStringPtr = "NEW STRING";
-	getStringPtr = CallPtrFunction<std::string*>(v1, "TestScript", "GetStringPtr");
-	std::cout << *getStringPtr << std::endl;
-	void* getStruct = CallPtrFunction<void*>(v1, "TestScript", "GetStruct");
-	TestStruct* ts = (TestStruct*)getStruct;
-	std::cout << ts->i << std::endl;
-	delete ts;
-	
-	CallPtrFunction(v1, "TestScript", "~constructor");
-	v1 = nullptr;
-	//v1 = map.at("TestScript").function_map.at("~constructor").function(v1, {});
-	
-	refl::UnloadGeneratedFiles();
+	reflector.UnloadGeneratedFiles();
 #endif
-	refl::reflector::Destroy();
+
 	return 0;
 };

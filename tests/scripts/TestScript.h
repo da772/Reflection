@@ -5,15 +5,16 @@
 #include <iostream>
 
 struct TestStruct {
-    int i = 0;
+    int i = 69;
 };
 
 UCLASS()
 class TestScript : public NativeScript {
     UCLASS_BODY()
     public:
-    UFUNCTION()
+    UCONSTRUCTOR()
     inline TestScript() { std::cout << "TEST SCRIPT CREATED" << std::endl; };
+    
     inline ~TestScript() { std::cout << "TEST SCRIPT DESTROYED" << std::endl;};
 
    

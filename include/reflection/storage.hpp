@@ -29,7 +29,6 @@ namespace refl {
             {"uint64_t", uproperty_type::_uint64_t}, {"bool", uproperty_type::_bool}, {"void",uproperty_type::_void }, {"constructor", uproperty_type::constructor}};
         }
 
-
         inline uint32_t GetTypeInt(const std::string& s) {
             if (impl::type_map.find(s) != impl::type_map.end()) {
                 return static_cast<uint32_t>(impl::type_map[s]);
@@ -63,18 +62,14 @@ namespace refl {
 
         class storage {
             public:
-            inline storage(::refl::err::err_hndl* error) : err(error) {
-
-            }
-            inline ~storage() {
-
-            }
-            inline void store(const std::string& s, uobject_struct data) { map[s] = data;}
-            inline void discard(const std::string& s) { map.erase(s);}
-            inline const std::unordered_map<std::string, uobject_struct>& get_map() const {return map;}
+                inline storage(::refl::err::err_hndl* error) : err(error) {}
+                inline ~storage() {}
+                inline void store(const std::string& s, uobject_struct data) { map[s] = data;}
+                inline void discard(const std::string& s) { map.erase(s);}
+                inline const std::unordered_map<std::string, uobject_struct>& get_map() const {return map;}
             private:
-            std::unordered_map<std::string, uobject_struct> map;
-            ::refl::err::err_hndl* err;
+                std::unordered_map<std::string, uobject_struct> map;
+                ::refl::err::err_hndl* err;
         };
 
     }

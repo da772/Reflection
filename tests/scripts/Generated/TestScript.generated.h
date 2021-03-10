@@ -3,8 +3,7 @@
 #include "../TestScript.h"
 class TestScript_Generated : public refl::class_generation {
  	public:
-	inline static void Load() {
-		refl::store::storage* storage = refl::reflector::Get()->GetStorage();
+	inline static void Load(::refl::store::storage* storage) {
 		storage->store("TestScript",{"TestScript",{
 		{"int1",{"int1","int",static_cast<refl::store::uproperty_type>(5),refl::store::offsetOf(&TestScript::int1) }},
 		{"int2",{"int2","int",static_cast<refl::store::uproperty_type>(5),refl::store::offsetOf(&TestScript::int2) }},
@@ -17,8 +16,8 @@ class TestScript_Generated : public refl::class_generation {
 		{"bBool",{"bBool","bool",static_cast<refl::store::uproperty_type>(4),refl::store::offsetOf(&TestScript::bBool) }},
 		{"myStruct",{"myStruct","TestStruct",static_cast<refl::store::uproperty_type>(1),refl::store::offsetOf(&TestScript::myStruct) }},
 		{"myString",{"myString","std::string",static_cast<refl::store::uproperty_type>(1),refl::store::offsetOf(&TestScript::myString) }}}, {
-		{"constructor",{"constructor","TestScript",static_cast<refl::store::uproperty_type>(18),{},[](void* ptr, std::vector<void*> args) {return (void*)new TestScript();} }},
-		{"~constructor",{"~constructor","void",static_cast<refl::store::uproperty_type>(3),{},[](void* ptr, std::vector<void*> args) {TestScript* p = (TestScript*)ptr; delete p; return nullptr;} }},
+		{"TestScript",{"TestScript","TestScript",static_cast<refl::store::uproperty_type>(1),{},[](void* ptr, std::vector<void*> args) {return (void*)new TestScript();} }},
+		{"~TestScript",{"~TestScript","void",static_cast<refl::store::uproperty_type>(3),{},[](void* ptr, std::vector<void*> args) {TestScript* p = (TestScript*)ptr; delete p; return nullptr;} }},
 		{"Update",{"Update","void",static_cast<refl::store::uproperty_type>(3),{},[](void* ptr, std::vector<void*> args) { (*((TestScript*)ptr).*(&TestScript::Update))(); return nullptr; } }},
 		{"End",{"End","void",static_cast<refl::store::uproperty_type>(3),{},[](void* ptr, std::vector<void*> args) { (*((TestScript*)ptr).*(&TestScript::End))(); return nullptr; } }},
 		{"Begin",{"Begin","void",static_cast<refl::store::uproperty_type>(3),{},[](void* ptr, std::vector<void*> args) { (*((TestScript*)ptr).*(&TestScript::Begin))(); return nullptr; } }},
@@ -29,8 +28,7 @@ class TestScript_Generated : public refl::class_generation {
 		{"GetStruct",{"GetStruct","TestStruct",static_cast<refl::store::uproperty_type>(1),{},[](void* ptr, std::vector<void*> args) {TestStruct v = (*((TestScript*)ptr).*(&TestScript::GetStruct))(); TestStruct* _ptr = new TestStruct(v); return (void*)_ptr; } }},
 		{"GetStringPtr",{"GetStringPtr","std::string*",static_cast<refl::store::uproperty_type>(2),{},[](void* ptr, std::vector<void*> args) {std::string* v = (*((TestScript*)ptr).*(&TestScript::GetStringPtr))(); return (void*)v; } }}}});
 	}
-	inline static void Unload() {
-		refl::store::storage* storage = refl::reflector::Get()->GetStorage();
+	inline static void Unload(::refl::store::storage* storage) {
 		storage->discard("TestScript");
 	}
 };

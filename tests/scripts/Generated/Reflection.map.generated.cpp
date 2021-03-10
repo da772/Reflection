@@ -2,10 +2,10 @@
 #include "TestScript.generated.h"
 
 namespace refl {
-	void LoadGeneratedFiles() {
-		TestScript_Generated::Load();
+	void ::refl::impl::__loadGeneratedFiles(::refl::store::storage* storage) {
+		TestScript_Generated::Load(storage);
 	}
-	void UnloadGeneratedFiles() {
-		TestScript_Generated::Unload();
+	void ::refl::impl::__unloadGeneratedFiles(::refl::store::storage* storage) {
+		TestScript_Generated::Unload(storage);
 	}
 }
