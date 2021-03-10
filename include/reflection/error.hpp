@@ -1,4 +1,8 @@
 #pragma once
+
+#include <cstring>
+#include <cstdlib>
+
 namespace refl {
 
     namespace err {

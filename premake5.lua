@@ -27,7 +27,8 @@ workspace "Reflection"
 
         includedirs 
         {
-       	    "include"
+       	    "include",
+            "tests"
         }
 
         filter "configurations:Debug"

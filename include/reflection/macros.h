@@ -1,3 +1,4 @@
+#pragma once
 #define UCLASS(x)
 #define UCLASS_BODY(x)
 #define UENUM

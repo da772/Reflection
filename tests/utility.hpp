@@ -1,4 +1,5 @@
 #pragma once
+#include <cstring>
 #include <string>
 
 #if defined(_WIN32)
@@ -13,12 +14,16 @@
 #include <libproc.h>
 #endif
 
+#if defined(__linux__) 
+#include <unistd.h>
+#endif
+
 inline std::string GetExecutablePath() {
 #if defined(_WIN32 )
 #pragma warning(push)
 #pragma warning(disable : 4996)
-		TCHAR NPath[MAX_PATH];
-		GetModuleFileName(NULL, NPath, MAX_PATH);
+		TCHAR NPath[1024];
+		GetModuleFileName(NULL, NPath, 1024);
 		std::wstring w_arr(NPath);
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 		std::string path = converter.to_bytes(w_arr);
@@ -35,7 +40,7 @@ inline std::string GetExecutablePath() {
 		return std::string(pathBuf);
 #endif
 #if defined(__linux__)
-		char buff[PATH_MAX];
+		char buff[1024];
 		ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff) - 1);
 		if (len != -1) {
 			buff[len] = '\0';
@@ -65,7 +70,7 @@ inline std::string GetExecutablePath() {
 		const std::string& exePath = GetExecutableDir();
 		std::string dirPath = exePath;
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__linux__)
         levelsUp+=3;
 #endif
 		for (int i = 0; i < levelsUp; i++) {
