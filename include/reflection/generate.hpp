@@ -87,7 +87,7 @@ namespace refl {
 						else {
 							s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
 							s+= impl::set_method_args(f);
-							s+="); void* _ptr = malloc(sizeof("+f.ret_name+")); memcpy(_ptr, &v, sizeof("+f.ret_name+")); return _ptr; } }}";
+							s+="); "+f.ret_name+"* _ptr = new "+f.ret_name+"(v); return (void*)_ptr; } }}";
 						}
 						
 						if (pos != std::string::npos) s+= ",\n";
@@ -119,7 +119,7 @@ namespace refl {
 					std::pair<uint32_t, std::string> p = f.args_val[i];
 					::refl::store::uproperty_type _type = static_cast<::refl::store::uproperty_type>(f.ret_val);
 					if (_type == ::refl::store::uproperty_type::_ptr || _type == ::refl::store::uproperty_type::uclass_ptr) {
-						s += "("+p.second+")args["+std::to_string(i)+"]";
+						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
 					} else {
 						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
 					}

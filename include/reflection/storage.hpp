@@ -16,14 +16,14 @@ namespace refl {
         }
             
         enum class uproperty_type : uint32_t {
-            NONE = 0, uclass, uclass_ptr, _void, _bool, _int, _uint, _char, _uchar, _ptr, _intptr, _int8_t, _int16_t, _int32_t, _int64_t, _uint8_t,
+            NONE = 0, uclass, uclass_ptr, _void, _bool, _int, _uint, _char, _uchar, _ptr, _int8_t, _int16_t, _int32_t, _int64_t, _uint8_t,
             _uint16_t, _uint32_t, _uint64_t, constructor
         };
 
         namespace impl {
             static std::unordered_map<std::string, uproperty_type> type_map = { {"int", uproperty_type::_int}, 
             {"unsigned int", uproperty_type::_uint}, {"char", uproperty_type::_char},{"unsigned char", uproperty_type::_uchar},
-            {"void*", uproperty_type::_ptr}, {"int*", uproperty_type::_intptr}, {"int8_t", uproperty_type::_int8_t}, 
+            {"void*", uproperty_type::_ptr}, {"int8_t", uproperty_type::_int8_t}, 
             {"int16_t", uproperty_type::_int16_t},{"int32_t", uproperty_type::_int32_t}, {"int64_t", uproperty_type::_int64_t},
             {"uint8_t", uproperty_type::_uint8_t}, {"uint16_t", uproperty_type::_uint16_t},{"uint32_t", uproperty_type::_uint32_t},
             {"uint64_t", uproperty_type::_uint64_t}, {"bool", uproperty_type::_bool}, {"void",uproperty_type::_void }, {"constructor", uproperty_type::constructor}};

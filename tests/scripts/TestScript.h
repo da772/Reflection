@@ -55,6 +55,39 @@ class TestScript : public NativeScript {
     inline Entity* GetEntity() { return new Entity();}
 
     UFUNCTION()
-    inline int GetNumber(int i, bool b) { if (b) return i; else return -i;};
+    inline int GetNumber(int i, bool b) { 
+        std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
+         if (b) return i; 
+         else return -i;
+        };
+
+    UFUNCTION()
+    inline int* GetInt2() {
+        return &this->int2;
+    }
+
+    UFUNCTION()
+    inline std::string GetString() {
+        std::cout <<"GETTING STRING" << std::endl;
+        return "MyString";
+    }
+
+    UFUNCTION()
+    inline TestStruct GetStruct() {
+        return TestStruct();
+    }
+
+/*
+    inline TestScript GetScript() {
+        return TestScript();
+    }
+*/
+    UPROPERTY()
+    std::string myString = "Hello World!";
+
+    UFUNCTION()
+    inline std::string* GetStringPtr() {
+        return &myString;
+    }
 
 };

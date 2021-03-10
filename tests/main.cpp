@@ -3,12 +3,16 @@
 #include <fstream>
 #include <streambuf>
 #include <sstream>  
+#include <type_traits>
+#include <new>
 
 #include "utility.hpp"
 #include "reflection/reflection.hpp"
 
+#include "scripts/TestScript.h"
 
-//#include "scripts/Generated/TestScript.generated.h"
+#define ADDR(x) reinterpret_cast<uintptr_t>(x)
+
 
 namespace refl {
 	extern void LoadGeneratedFiles();
@@ -29,10 +33,48 @@ void SetPtrVar(void* v, const std::string& clazz, const std::string& name, T val
 	*(T*)((uint8_t*)v + o) = value;
 }
 
-template<typename T, typename ... Args >
-T CallPtrFunction(void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
+
+template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
+T _CallPtrFunction(void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+	
+	std::cout<< name << " NOT POINTER" << std::endl;
+	T* _f = (T*)map.at(clazz).function_map.at(name).function(v, vec);
+	T f = *_f;
+	delete _f;
+	return f;
+}
+
+template <typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
+T _CallPtrFunction(void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+
+	std::cout<< name << " POINTER" << std::endl;
+	void* _f = map.at(clazz).function_map.at(name).function(v, vec);
+	T f = (T)_f;
+	return f;
 
 }
+
+template<typename T, typename ... Args>
+T CallPtrFunction(void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
+	std::vector<void*> vec = {(void*)&args...};
+	return _CallPtrFunction<T>(v, clazz, name, vec);
+}
+
+template<typename ... Args >
+void CallPtrFunction(void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
+	const std::unordered_map<std::string, refl::store::uobject_struct>& map = refl::reflector::Get()->GetStorage()->get_map();
+	std::vector<void*> vec = {(void*)&args...};
+	void* f = map.at(clazz).function_map.at(name).function(v, vec);
+	::refl::store::uproperty_type ret_type = map.at(clazz).function_map.at(name).ret_val;
+	if (ret_type != ::refl::store::uproperty_type::_ptr && ret_type != ::refl::store::uproperty_type::uclass_ptr && ret_type != ::refl::store::uproperty_type::_void) {
+		if (f != nullptr)
+			free(f);
+	}
+	return;
+}
+
 
 int main() {
 	refl::reflector* reflector = refl::reflector::Get();
@@ -57,7 +99,7 @@ int main() {
 	
 #else
 	refl::LoadGeneratedFiles();
-
+	
 	refl::store::storage* storage = reflector->GetStorage();
 
 	const std::unordered_map<std::string,refl::store::uobject_struct>& map = storage->get_map();
@@ -68,40 +110,34 @@ int main() {
 			s += " " + _p.second.name + ", "+_p.second.type_name + ", " + std::to_string(_p.second.offset) + " | ";
 		}
 		s += "\n";
+		for (const std::pair<std::string,refl::store::ufunction_struct>& _p : p.second.function_map) {
+			s+= _p.first +"\n";
+		}
 		std::cout << s << std::endl;
 	}
 
-	void* v = map.at("TestScript").function_map.at("constructor").function(nullptr, {});
-	uintptr_t o = map.at("TestScript").property_map.at("int2").offset;
-	int *i = (int*)((uint8_t*)v + o);
-	std::cout << std::to_string(*i) << std::endl;
-	*(int*)((uint8_t*)v + o) = 51;
-	std::cout << std::to_string(*i) << std::endl;
-	int _i = 189;
-	bool b = false;
-
-	int* _f = (int*)map.at("TestScript").function_map.at("GetNumber").function(v, {(void*)&_i, (void*)&b});
-	std::cout << std::to_string(*_f) << std::endl;
-	free(_f);
-
-	o = map.at("TestScript").property_map.at("numberptr").offset;
-	i = *((int**)((uint8_t*)v + o));
-	std::cout << std::to_string(*i) << std::endl;
-
-	//int pp = GetPtrVar<int>(v, "TestScript", "int2", map);
+	void* v1 = CallPtrFunction<void*>(v1, "TestScript", "constructor");
 	
-
-	v = map.at("TestScript").function_map.at("~constructor").function(v, {});
-
-	void* v1 = map.at("TestScript").function_map.at("constructor").function(nullptr, {});
-	int pp = GetPtrVar<int>(v1, "TestScript", "int2");
+	int getNum = CallPtrFunction<int>(v1, "TestScript", "GetNumber", 823, false);
+	int* getInt2 = CallPtrFunction<int*>(v1, "TestScript", "GetInt2");
+	std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
+	int _f = *getInt2;
+	std::cout << "GET INT = " << std::to_string(_f) << std::endl;
+	std::string getString = CallPtrFunction<std::string>(v1, "TestScript", "GetString");
+	std::cout << getString << std::endl;
+	std::string* getStringPtr = CallPtrFunction<std::string*>(v1, "TestScript", "GetStringPtr");
+	std::cout << *getStringPtr << std::endl;
+	*getStringPtr = "NEW STRING";
+	getStringPtr = CallPtrFunction<std::string*>(v1, "TestScript", "GetStringPtr");
+	std::cout << *getStringPtr << std::endl;
+	void* getStruct = CallPtrFunction<void*>(v1, "TestScript", "GetStruct");
+	TestStruct* ts = (TestStruct*)getStruct;
+	std::cout << ts->i << std::endl;
+	delete ts;
 	
-	std::cout << std::to_string(pp) << std::endl;
-	SetPtrVar<int>(v1, "TestScript", "int2", 23);
-	pp = GetPtrVar<int>(v1, "TestScript", "int2");
-	std::cout << std::to_string(pp) << std::endl;
-
-	v1 = map.at("TestScript").function_map.at("~constructor").function(v1, {});
+	CallPtrFunction(v1, "TestScript", "~constructor");
+	v1 = nullptr;
+	//v1 = map.at("TestScript").function_map.at("~constructor").function(v1, {});
 	
 	refl::UnloadGeneratedFiles();
 #endif
