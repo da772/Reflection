@@ -14,8 +14,7 @@ namespace refl {
                     err_len = 1;
                 }
                 inline ~err_hndl() {
-                    delete err_str;
-                    err_str = nullptr;
+                    free(err_str);
                 }
                 inline void setErrorStr(const char* str) {
                     bHasError = true;
@@ -33,6 +32,7 @@ namespace refl {
                         f(err_str);
                     }
                 }
+
                 inline void setErrorCallback(void(*_f)(const char*)) { f = _f; }
                 inline const char* GetError() { bHasError = false; return err_str; }
                 inline bool HasError() const {return bHasError; }

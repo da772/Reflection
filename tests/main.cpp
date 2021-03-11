@@ -5,77 +5,19 @@
 #include <sstream>  
 #include <type_traits>
 #include <new>
+#include <stdio.h>
 
 #include "utility.hpp"
 #include "reflection/reflection.hpp"
 
-#define ADDR(x) reinterpret_cast<uintptr_t>(x)
-
-template<typename T>
-T GetPtrVar(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
-	uintptr_t o = map.at(clazz).property_map.at(name).offset;
-	return *(T*)((uint8_t*)v + o);
-}
-
-template<typename T>
-void SetPtrVar(::refl::store::storage* store,void* v, const std::string& clazz, const std::string& name, T value) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
-	uintptr_t o = map.at(clazz).property_map.at(name).offset;
-	*(T*)((uint8_t*)v + o) = value;
-}
-
-
-template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
-T _CallPtrFunction(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
-	
-	std::cout<< name << " NOT POINTER" << std::endl;
-	T* _f = (T*)map.at(clazz).function_map.at(name).function(v, vec);
-	T f = *_f;
-	delete _f;
-	return f;
-}
-
-template <typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
-T _CallPtrFunction(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
-
-	std::cout<< name << " POINTER" << std::endl;
-	void* _f = map.at(clazz).function_map.at(name).function(v, vec);
-	T f = (T)_f;
-	return f;
-
-}
-
-template<typename T, typename ... Args>
-T CallPtrFunction(::refl::store::storage* store,void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
-	std::vector<void*> vec = {(void*)&args...};
-	return _CallPtrFunction<T>(store, v, clazz, name, vec);
-}
-
-template<typename ... Args >
-void CallPtrFunction(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name, Args&& ... args) {
-	const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
-	std::vector<void*> vec = {(void*)&args...};
-	void* f = map.at(clazz).function_map.at(name).function(v, vec);
-	::refl::store::uproperty_type ret_type = map.at(clazz).function_map.at(name).ret_val;
-	if (ret_type != ::refl::store::uproperty_type::_ptr && ret_type != ::refl::store::uproperty_type::uclass_ptr && ret_type != ::refl::store::uproperty_type::_void) {
-		if (f != nullptr)
-			free(f);
-	}
-	return;
-}
-
 static void Benchmark(refl::reflector&);
-
+static void __UnloadLib(refl::reflector& r);
+static void __LoadLib(refl::reflector& r);
+static void __GenerateLib(refl::reflector& r);
 static dllptr lib = 0;
 
-
-
 int main() {
-	refl::reflector reflect;
-	reflect = refl::reflector();
+	refl::reflector reflect = refl::reflector();
 	reflect.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
 	reflect.SetOutputDir((GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
 
@@ -83,39 +25,31 @@ int main() {
 		std::cout << "Enter Command: ";
 		char userInput;
 		std::cin >> userInput;
-		if (userInput == 'e')
-			Benchmark(reflect);
+		if (userInput == 'e') {
+			if (lib) {
+				Benchmark(reflect);
+				continue;
+			}
+			std::cout << "LIB NOT LOADED" << std::endl;
+		}
+		if (userInput == 'r') {
+			if (lib) {
+				__UnloadLib(reflect);
+			}
+			__GenerateLib(reflect);
+			__LoadLib(reflect);
+		}
 		if (userInput == 'l') {
-			std::string loc = GetParentExecuteableDir(0)+utility::GetDLLExtensionName("Reflection_Tests_Scripts");
-			lib = utility::dlopen(loc.c_str(), RTLD_NOW);
-			if (!lib) {
-				std::cout << "INVALID HANDLE" << std::endl;
-				continue;
-			}
-			void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "ReflectionMap__loadGeneratedFiles"));
-			if (!func_ptr) {
-				std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
-				utility::dlclose(lib);
-				lib = 0;
-				continue;
-			}
-			(*func_ptr)(reflect.GetStorage());
+			__LoadLib(reflect);
 		}
 		if (userInput == 'u') {
-			if (lib) {
-				void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "ReflectionMap__unloadGeneratedFiles"));
-				if (func_ptr) {
-					(*func_ptr)(reflect.GetStorage());
-				}
-				utility::dlclose(lib);
-				lib = 0;
-			}
+			__UnloadLib(reflect);
+		}
+		if (userInput == 'g') {
+			__GenerateLib(reflect);
 		}
 		if (userInput == 'q') {
-			if (lib) {
-				utility::dlclose(lib);
-				lib = 0;
-			}
+			if (lib) __UnloadLib(reflect);
 			break;
 		}
 	}
@@ -124,22 +58,6 @@ int main() {
 
 static void Benchmark(refl::reflector& reflect) {
 
-	std::string in = GetParentExecuteableDir(3) + "tests/scripts/TestScript.h";
-	std::ifstream t(in);
-	std::stringstream buffer;
-	buffer << t.rdbuf();
-	std::cout << in << std::endl;
-#if 0
-	//std::string out = GetParentExecuteableDir(0)+"scripts/TestScript.generated.h";
-	std::cout << in << std::endl;
-	reflect.Generate(in.c_str());
-	if (reflect.HasError()) {
-		std::cout << reflect.GetError();
-	}
-	//std::cout << (out ? out : reflect->GetError()) << std::endl;
-	// RELOAD DLL
-
-#else
 	refl::store::storage* storage = reflect.GetStorage();
 	//reflect.LoadGeneratedFiles();
 
@@ -157,12 +75,14 @@ static void Benchmark(refl::reflector& reflect) {
 		}
 		std::cout << s << std::endl;
 	}
+	std::cout << "MAP PRINTED" << std::endl;
 	double ns = 0;
 	double n = 0;
 	int testSize = 100000;
 	{
 		uint64_t time = GetTimeNS();
 		refl::uClass uClss = reflect.CreateUClass("TestScript");
+		std::cout << "HERE" << std::endl;
 		//void* v1 = uClss.data();
 
 		int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
@@ -189,8 +109,55 @@ static void Benchmark(refl::reflector& reflect) {
 	}
 	std::cout << "REFLECTION: " << ns / (double)testSize << "ms NATIVE: " << n / (double)testSize << " ms" << std::endl;
 
-	std::cout << (ns < n ? "REFLECTION " : "NATIVE ") << " is " << (ns < n ? n / ns : ns / n) << "x faster" << std::endl;
+	//std::cout << (ns < n ? "REFLECTION " : "NATIVE ") << " is " << (ns < n ? n / ns : ns / n) << "x faster" << std::endl;
 
 	//reflect.UnloadGeneratedFiles();
-#endif
+}
+
+
+static void __LoadLib(refl::reflector& r) {
+	std::string loc = GetParentExecuteableDir(0) + utility::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
+	std::ifstream  src(GetParentExecuteableDir(0) + utility::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+	std::ofstream  dst(loc, std::ios::binary);
+	dst << src.rdbuf();
+	dst.close();
+	lib = utility::dlopen(loc.c_str(), 0);
+	if (!lib) {
+		std::cout << "INVALID HANDLE" << std::endl;
+		return;
+	}
+	
+	void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "__ReflectionMap__loadGeneratedFiles"));
+	if (!func_ptr) {
+		std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
+		utility::dlclose(lib);
+		lib = 0;
+		return;
+	}
+	(*func_ptr)(r.GetStorage());
+}
+
+static void __UnloadLib(refl::reflector& r) {
+	if (lib) {
+		void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "__ReflectionMap__unloadGeneratedFiles"));
+		if (func_ptr) {
+			(*func_ptr)(r.GetStorage());
+		}
+		utility::dlclose(lib);
+		lib = 0;
+		std::string loc = GetParentExecuteableDir(0) + utility::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
+		::remove(loc.c_str());
+	}
+}
+
+static void __GenerateLib(refl::reflector& r) {
+	std::string in = GetParentExecuteableDir(3) + "tests/scripts/TestScript.h";
+	std::ifstream t(in);
+	std::stringstream buffer;
+	buffer << t.rdbuf();
+	std::cout << in << std::endl;
+	r.Generate(in.c_str());
+	if (r.HasError()) {
+		std::cout << r.GetError() << std::endl;
+	}
 }

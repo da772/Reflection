@@ -144,11 +144,9 @@ namespace refl {
 
 			static void reload_generation_map(const std::string& outputDir, const std::vector<std::string>& map) {
 				std::string s = "#pragma once\n#include \"reflection/reflection.hpp\"\n";
-				
-				s += "namespace refl {\n";
-				s += "\tvoid ::refl::impl::__loadGeneratedFiles(::refl::store::storage* storage);\n";
-				s += "\tvoid ::refl::impl::__unloadGeneratedFiles(::refl::store::storage* storage);\n";
-				s += "}\n";
+				s += "\n";
+				s += "\t__REFLECTION__EXPORT__ void __ReflectionMap__loadGeneratedFiles(::refl::store::storage* storage);\n";
+				s += "\t__REFLECTION__EXPORT__ void __ReflectionMap__unloadGeneratedFiles(::refl::store::storage* storage);\n";
 				std::ofstream out(outputDir+std::string("Reflection.map.generated.h"));
 				out << s;
 				out.close();
@@ -157,20 +155,20 @@ namespace refl {
 				for (const std::string& p : map) {
 					s += std::string("#include \"")+p+std::string(".generated.h\"\n");
 				}
-				s += "\nnamespace refl {\n";
-				s += "\tvoid ::refl::impl::__loadGeneratedFiles(::refl::store::storage* storage)";
+				s += "\n\n";
+				s += "\tvoid __ReflectionMap__loadGeneratedFiles(::refl::store::storage* storage)";
 				s+= " {\n";
 				for (const std::string& p : map) {
 					s += std::string("\t\t")+p+std::string("_Generated::Load(storage);\n");
 				}
 				s += "\t}\n";
-				s += "\tvoid ::refl::impl::__unloadGeneratedFiles(::refl::store::storage* storage)";
+				s += "\tvoid __ReflectionMap__unloadGeneratedFiles(::refl::store::storage* storage)";
 				s+= " {\n";
 				for (const std::string& p : map) {
 					s += std::string("\t\t")+p+std::string("_Generated::Unload(storage);\n");
 				}
 				s += "\t}\n";
-				s += "}\n";
+				s += "\n";
 				out = std::ofstream(outputDir+std::string("Reflection.map.generated.cpp"));
 				out << s;
 				out.close();

@@ -96,8 +96,8 @@ namespace refl {
 
 	class reflector {
 		public:
-			inline reflector() : gen(&err), st(&err) {}
-			inline ~reflector() {}
+			inline reflector() : err(), gen(&err), st(&err) {}
+			inline ~reflector() { }
 			inline void Generate(const char* in){ return gen.generate(in);}
 			inline void SetErrorCallback(void(*f)(const char*)) { err.setErrorCallback(f); }			
 			inline bool HasError() const { return err.HasError(); }
@@ -114,6 +114,8 @@ namespace refl {
 			template <typename T>
 			T __callfunc(void* ptr, const std::string& clazz, const std::string& name, const std::vector<void*>& vec) {
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = st.get_map();
+				std::cout << map.at(clazz).name << std::endl;
+				std::cout << map.at(clazz).function_map.at(name).ret_name << std::endl;
 				void* _f = map.at(clazz).function_map.at(name).function(ptr, vec);
 				T f = (T)_f;
 				return f;

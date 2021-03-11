@@ -17,7 +17,6 @@ class TestScript : public NativeScript {
     
     inline ~TestScript() { };
 
-   
     UFUNCTION()
     virtual inline void Update() override {};
     UFUNCTION()
@@ -58,8 +57,10 @@ class TestScript : public NativeScript {
     UFUNCTION()
     inline int GetNumber(int i, bool b) { 
        // std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
-         if (b) return i; 
-         else return -i;
+        std::cout << "THEM BOYS HOTT OOOOO SKEE SKEE SEKEEE" << std::endl;
+        if (b) return i; 
+        else return -i;
+         
         };
 
     UFUNCTION()

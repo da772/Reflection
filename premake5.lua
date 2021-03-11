@@ -1,5 +1,10 @@
 workspace "Reflection"
     architecture "x86_64"
+    platforms 
+    {
+			"x86",
+			"x64"
+	}
 	configurations
 	{
 		"Debug",
@@ -12,7 +17,7 @@ workspace "Reflection"
         kind "ConsoleApp"
         language "C++"
             cppdialect "C++11"
-        staticruntime "on"
+        staticruntime "off"
         targetdir ("%{prj.location}/bin/" .. outputdir .. "/%{prj.name}")
         objdir ("%{prj.location}/obj/" .. outputdir .. "/%{prj.name}")
 
@@ -43,7 +48,7 @@ workspace "Reflection"
         kind "SharedLib"
         language "C++"
             cppdialect "C++11"
-        staticruntime "on"
+        staticruntime "off"
         targetdir ("%{prj.location}/bin/" .. outputdir .. "/Reflection_Tests")
         objdir ("%{prj.location}/obj/" .. outputdir .. "/Reflection_Tests")
         files 

@@ -8,8 +8,9 @@
 #include <WS2tcpip.h>
 #include <algorithm>
 #include <libloaderapi.h>
-#include <windows>
+#include <windows.h>
 using dllptr = HMODULE;
+using addrptr = FARPROC;
 #endif
 
 #if defined(__APPLE__)
@@ -17,12 +18,14 @@ using dllptr = HMODULE;
 #include <unistd.h>
 #include <libproc.h>
 using dllptr = void*;
+using addrptr = void*;
 #endif
 
 #if defined(__linux__) 
 #include <unistd.h>
 #include <dlfcn.h>
 using dllptr = void*;
+using addrptr = void*;
 #endif
 
 #include <chrono>
@@ -34,24 +37,36 @@ inline uint64_t GetTimeNS() {
 namespace utility {
 	dllptr dlopen(const char* filename, int flags) {
 		#ifdef __linux__
-		return ::dlopen(filename, flags);
+		return ::dlopen(filename, RTLD_NOW);
 		#endif
+#ifdef _WIN32
+		return ::LoadLibraryA(filename);
+#endif
 	}
 	int dlclose(dllptr p) {
 		#ifdef __linux__
 			return ::dlclose(p);
 		#endif
+	#ifdef _WIN32
+			return (int)FreeLibrary(p);
+	#endif
 	}
-	void* dlsym (dllptr p, const char* name) {
-		#ifdef __linux__ 
-			return ::dlsym(p, name);
-		#endif
+	addrptr dlsym(dllptr p, const char* name) {
+#ifdef __linux__ 
+		return ::dlsym(p, name);
+#endif
+#ifdef _WIN32 
+		return ::GetProcAddress(p, name);
+#endif
 	}
 
 	std::string GetDLLExtensionName(std::string name) {
 		#ifdef __linux__
 		return "lib"+name+".so";
 		#endif
+#ifdef _WIN32
+		return name + ".dll";
+#endif
 	}
 }
 
