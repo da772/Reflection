@@ -4,14 +4,28 @@
 #include "generation.hpp"
 #include "generate.hpp"
 
+#if defined(_MSC_VER)
+    //  Microsoft 
+    #define __REFLECTION__EXPORT__ extern "C" __declspec(dllexport)
+    #define __REFLECTION__IMPORT__ extern "C" __declspec(dllimport)
+#elif defined(__GNUC__)
+    //  GCC
+    #define __REFLECTION__EXPORT__ extern "C" __attribute__((visibility("default")))
+    #define __REFLECTION__IMPORT__ extern "C"
+#else
+    //  do nothing and hope for the best?
+    #define __REFLECTION__EXPORT__
+    #define __REFLECTION__IMPORT__
+#endif
+
 
 namespace refl {
-
+/*
 	namespace impl {
 		extern void __loadGeneratedFiles(refl::store::storage* storage);
 		extern void __unloadGeneratedFiles(refl::store::storage* storage);
 	}
-	
+*/	
 	class reflector;
 
 	class uClass {
@@ -90,8 +104,8 @@ namespace refl {
 			inline const char* GetError()  { return err.GetError();}
 			inline store::storage* GetStorage() { return &st; }
 			inline void SetOutputDir(const char* outputDir) { gen.set_output(outputDir); }
-			void LoadGeneratedFiles() { ::refl::impl::__loadGeneratedFiles(&st); }
-			void UnloadGeneratedFiles() { ::refl::impl::__unloadGeneratedFiles(&st); }
+			//void LoadGeneratedFiles() { ::refl::impl::__loadGeneratedFiles(&st); }
+			//void UnloadGeneratedFiles() { ::refl::impl::__unloadGeneratedFiles(&st); }
 		private:
 			err::err_hndl err;
 			gen::generator gen;

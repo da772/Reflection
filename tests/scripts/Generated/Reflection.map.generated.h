@@ -1,6 +1,6 @@
 #pragma once
 #include "reflection/reflection.hpp"
-namespace refl {
-	void ::refl::impl::__loadGeneratedFiles(::refl::store::storage* storage);
-	void ::refl::impl::__unloadGeneratedFiles(::refl::store::storage* storage);
-}
+
+__REFLECTION__EXPORT__ void ReflectionMap__loadGeneratedFiles(::refl::store::storage* storage);
+__REFLECTION__EXPORT__ void ReflectionMap__unloadGeneratedFiles(::refl::store::storage* storage);
+

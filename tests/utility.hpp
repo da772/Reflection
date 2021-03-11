@@ -7,22 +7,52 @@
 #include <codecvt>
 #include <WS2tcpip.h>
 #include <algorithm>
+#include <libloaderapi.h>
+#include <windows>
+using dllptr = HMODULE;
 #endif
 
 #if defined(__APPLE__)
 #include <sys/types.h>
 #include <unistd.h>
 #include <libproc.h>
+using dllptr = void*;
 #endif
 
 #if defined(__linux__) 
 #include <unistd.h>
+#include <dlfcn.h>
+using dllptr = void*;
 #endif
 
 #include <chrono>
 
 inline uint64_t GetTimeNS() {
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();;
+}
+
+namespace utility {
+	dllptr dlopen(const char* filename, int flags) {
+		#ifdef __linux__
+		return ::dlopen(filename, flags);
+		#endif
+	}
+	int dlclose(dllptr p) {
+		#ifdef __linux__
+			return ::dlclose(p);
+		#endif
+	}
+	void* dlsym (dllptr p, const char* name) {
+		#ifdef __linux__ 
+			return ::dlsym(p, name);
+		#endif
+	}
+
+	std::string GetDLLExtensionName(std::string name) {
+		#ifdef __linux__
+		return "lib"+name+".so";
+		#endif
+	}
 }
 
 inline std::string GetExecutablePath() {
@@ -78,7 +108,7 @@ inline std::string GetExecutablePath() {
 		std::string dirPath = exePath;
 
 
-        levelsUp+=3;
+        //levelsUp+=3;
 
 		for (int i = 0; i < levelsUp; i++) {
 			uint32_t slash = (uint32_t)dirPath.find_last_of("/\\");

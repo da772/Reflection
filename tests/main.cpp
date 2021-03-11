@@ -9,12 +9,7 @@
 #include "utility.hpp"
 #include "reflection/reflection.hpp"
 
-#include "scripts/TestScript.h"
-
 #define ADDR(x) reinterpret_cast<uintptr_t>(x)
-
-
-
 
 template<typename T>
 T GetPtrVar(::refl::store::storage* store, void* v, const std::string& clazz, const std::string& name) {
@@ -72,22 +67,64 @@ void CallPtrFunction(::refl::store::storage* store, void* v, const std::string& 
 	return;
 }
 
-static void Benchmark();
+static void Benchmark(refl::reflector&);
+
+static dllptr lib = 0;
+
+
 
 int main() {
-	
-	Benchmark();
+	refl::reflector reflect;
+	reflect = refl::reflector();
+	reflect.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
+	reflect.SetOutputDir((GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
 
+	while (true) {
+		std::cout << "Enter Command: ";
+		char userInput;
+		std::cin >> userInput;
+		if (userInput == 'e')
+			Benchmark(reflect);
+		if (userInput == 'l') {
+			std::string loc = GetParentExecuteableDir(0)+utility::GetDLLExtensionName("Reflection_Tests_Scripts");
+			lib = utility::dlopen(loc.c_str(), RTLD_NOW);
+			if (!lib) {
+				std::cout << "INVALID HANDLE" << std::endl;
+				continue;
+			}
+			void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "ReflectionMap__loadGeneratedFiles"));
+			if (!func_ptr) {
+				std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
+				utility::dlclose(lib);
+				lib = 0;
+				continue;
+			}
+			(*func_ptr)(reflect.GetStorage());
+		}
+		if (userInput == 'u') {
+			if (lib) {
+				void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "ReflectionMap__unloadGeneratedFiles"));
+				if (func_ptr) {
+					(*func_ptr)(reflect.GetStorage());
+				}
+				utility::dlclose(lib);
+				lib = 0;
+			}
+		}
+		if (userInput == 'q') {
+			if (lib) {
+				utility::dlclose(lib);
+				lib = 0;
+			}
+			break;
+		}
+	}
 	return 0;
 };
 
-static void Benchmark() {
-	refl::reflector reflector = refl::reflector();
+static void Benchmark(refl::reflector& reflect) {
 
-	reflector.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
-	reflector.SetOutputDir((GetParentExecuteableDir(0) + std::string("tests/scripts/Generated/")).c_str());
-
-	std::string in = GetParentExecuteableDir(0) + "tests/scripts/TestScript.h";
+	std::string in = GetParentExecuteableDir(3) + "tests/scripts/TestScript.h";
 	std::ifstream t(in);
 	std::stringstream buffer;
 	buffer << t.rdbuf();
@@ -95,16 +132,16 @@ static void Benchmark() {
 #if 0
 	//std::string out = GetParentExecuteableDir(0)+"scripts/TestScript.generated.h";
 	std::cout << in << std::endl;
-	reflector.Generate(in.c_str());
-	if (reflector.HasError()) {
-		std::cout << reflector.GetError();
+	reflect.Generate(in.c_str());
+	if (reflect.HasError()) {
+		std::cout << reflect.GetError();
 	}
-	//std::cout << (out ? out : reflector->GetError()) << std::endl;
+	//std::cout << (out ? out : reflect->GetError()) << std::endl;
 	// RELOAD DLL
 
 #else
-	refl::store::storage* storage = reflector.GetStorage();
-	reflector.LoadGeneratedFiles();
+	refl::store::storage* storage = reflect.GetStorage();
+	//reflect.LoadGeneratedFiles();
 
 	const std::unordered_map<std::string, refl::store::uobject_struct>& map = storage->get_map();
 	std::cout << "PRINTING MAP : " << map.size() << std::endl;
@@ -123,54 +160,37 @@ static void Benchmark() {
 	double ns = 0;
 	double n = 0;
 	int testSize = 100000;
-	for (int i = 0; i < testSize; i++) {
-		{
-			uint64_t time = GetTimeNS();
-			refl::uClass uClss = reflector.CreateUClass("TestScript");
-			//void* v1 = uClss.data();
+	{
+		uint64_t time = GetTimeNS();
+		refl::uClass uClss = reflect.CreateUClass("TestScript");
+		//void* v1 = uClss.data();
 
-			int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
-			int* getInt2 = uClss.CallFunction<int*>("GetInt2");//CallPtrFunction<int*>(storage, v1, "TestScript", "GetInt2");
-			//std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
+		int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
+		int* getInt2 = uClss.CallFunction<int*>("GetInt2");//CallPtrFunction<int*>(storage, v1, "TestScript", "GetInt2");
+		//std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
 
-			//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
-			*getInt2 = 55;
-			//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+		//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+		*getInt2 = 55;
+		//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
 
 
-			std::string getString = uClss.CallFunction<std::string>("GetString");
-			//std::cout << getString << std::endl;
-			std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-			//std::cout << *getStringPtr << std::endl;
-			*getStringPtr = "NEW STRING";
-			getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-			//std::cout << *getStringPtr << std::endl;
-			TestStruct getStruct = uClss.CallFunction<TestStruct>("GetStruct");
-			//std::cout << ts->i << std::endl;
-			time = GetTimeNS() - time;
-			//std::cout << "\n\n" << (double)time / 1e6 << " ms | " << time << " ns\n\n" << std::endl;
-			ns += (double)time / 1e6;
-		}
-		{
-			uint64_t time = GetTimeNS();
-			TestScript* t = new TestScript();
-			int getNum = t->GetNumber(832, false);
-			int* getInt2 = t->GetInt2();
-			*getInt2 = 55;
-			std::string getString = t->GetString();
-			std::string* getStringPtr = t->GetStringPtr();
-			*getStringPtr = "NEW STRING";
-			getStringPtr = t->GetStringPtr();
-			TestStruct getStruct = t->GetStruct();
-			time = GetTimeNS() - time;
-			n += (double)time / 1e6;
-			//std::cout << "\n\n" << (double)time / 1e6 << " ms | " << time << " ns\n\n" << std::endl;
-		}
+		std::string getString = uClss.CallFunction<std::string>("GetString");
+		//std::cout << getString << std::endl;
+		std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+		//std::cout << *getStringPtr << std::endl;
+		*getStringPtr = "NEW STRING";
+		getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+		//std::cout << *getStringPtr << std::endl;
+		//TestStruct getStruct = uClss.CallFunction<TestStruct>("GetStruct");
+		//std::cout << ts->i << std::endl;
+		time = GetTimeNS() - time;
+		//std::cout << "\n\n" << (double)time / 1e6 << " ms | " << time << " ns\n\n" << std::endl;
+		ns += (double)time / 1e6;
 	}
 	std::cout << "REFLECTION: " << ns / (double)testSize << "ms NATIVE: " << n / (double)testSize << " ms" << std::endl;
 
 	std::cout << (ns < n ? "REFLECTION " : "NATIVE ") << " is " << (ns < n ? n / ns : ns / n) << "x faster" << std::endl;
 
-	reflector.UnloadGeneratedFiles();
+	//reflect.UnloadGeneratedFiles();
 #endif
 }
