@@ -130,7 +130,7 @@ namespace refl {
 
 			static std::string set_method_args(const impl::ufunction& f) {
 				std::string s = "";
-				for (int i = 0; i < f.args_val.size(); i++) {
+				for (uint32_t i = 0; i < f.args_val.size(); i++) {
 					std::pair<uint32_t, std::string> p = f.args_val[i];
 					::refl::store::uproperty_type _type = static_cast<::refl::store::uproperty_type>(f.ret_val);
 					if (_type == ::refl::store::uproperty_type::_ptr || _type == ::refl::store::uproperty_type::uclass_ptr) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "NativeScript.h"
 #include "Entity.hpp"
+#include "MyPhone.h"
 
 #include <iostream>
 
@@ -58,7 +59,9 @@ class TestScript : public NativeScript {
     UFUNCTION()
     inline int GetNumber(int i, bool b) { 
        // std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
-        std::cout << "ROMA IS HOT" << std::endl;
+        Phone c;
+        std::cout << "SCOOOBY SNACKS" << std::endl;
+        std::cout << "NEW CAR: " << c.model << std::endl;
         if (b) return i; 
         else return -i;
          

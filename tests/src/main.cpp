@@ -19,7 +19,7 @@ static dllptr lib = 0;
 int main() {
 	refl::reflector reflect = refl::reflector();
 	reflect.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
-	reflect.SetOutputDir((GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
+	reflect.SetOutputDir((files::GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
 
 	while (true) {
 		std::cout << "Enter Command: ";
@@ -37,7 +37,14 @@ int main() {
 				__UnloadLib(reflect);
 			}
 			__GenerateLib(reflect);
-			__LoadLib(reflect);
+			std::string buildOut = sys::compile_proj(files::GetParentExecuteableDir(3), "Reflection_Tests_Scripts");
+			if (buildOut.size() > 0) {
+				std::cout << buildOut << std::endl;
+			}
+			else {
+				std::cout << "BUILD SUCCESS\n" << std::endl;
+				__LoadLib(reflect);
+			}
 		}
 		if (userInput == 'l') {
 			__LoadLib(reflect);
@@ -116,22 +123,24 @@ static void Benchmark(refl::reflector& reflect) {
 
 
 static void __LoadLib(refl::reflector& r) {
-	std::string loc = GetParentExecuteableDir(0) + utility::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
-	std::ifstream  src(GetParentExecuteableDir(0) + utility::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+	std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
+	std::ifstream src(files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+#ifdef _WIN32
+	dll::movePDB(files::GetParentExecuteableDir(0), "Reflection_Tests_Scripts");
+#endif
 	std::ofstream  dst(loc, std::ios::binary);
 	dst << src.rdbuf();
 	dst.close();
-	lib = utility::dlopen(loc.c_str(), 0);
+	lib = dll::dlopen(loc.c_str(), 0);
 	if (!lib) {
-		std::cout << "INVALID HANDLE" << std::endl;
-		std::cout << dlerror() << std::endl;
+		std::cout << "INVALID HANDLE: " << dll::dlerror() << std::endl;
 		return;
 	}
 	
-	void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "__ReflectionMap__loadGeneratedFiles"));
+	void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(dll::dlsym(lib, "__ReflectionMap__loadGeneratedFiles"));
 	if (!func_ptr) {
 		std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
-		utility::dlclose(lib);
+		dll::dlclose(lib);
 		lib = 0;
 		return;
 	}
@@ -140,19 +149,19 @@ static void __LoadLib(refl::reflector& r) {
 
 static void __UnloadLib(refl::reflector& r) {
 	if (lib) {
-		void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(utility::dlsym(lib, "__ReflectionMap__unloadGeneratedFiles"));
+		void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(dll::dlsym(lib, "__ReflectionMap__unloadGeneratedFiles"));
 		if (func_ptr) {
 			(*func_ptr)(r.GetStorage());
 		}
-		utility::dlclose(lib);
+		dll::dlclose(lib);
 		lib = 0;
-		std::string loc = GetParentExecuteableDir(0) + utility::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
+		std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
 		::remove(loc.c_str());
 	}
 }
 
 static void __GenerateLib(refl::reflector& r) {
-	std::string in = GetParentExecuteableDir(3) + "tests/scripts/TestScript.h";
+	std::string in = files::GetParentExecuteableDir(3) + "tests/scripts/TestScript.h";
 	std::ifstream t(in);
 	std::stringstream buffer;
 	buffer << t.rdbuf();
