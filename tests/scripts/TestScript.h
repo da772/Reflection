@@ -4,6 +4,7 @@
 
 #include <iostream>
 
+
 struct TestStruct {
     int i = 69;
 };
@@ -12,9 +13,9 @@ UCLASS()
 class TestScript : public NativeScript {
     UCLASS_BODY()
     public:
+
     UCONSTRUCTOR()
     inline TestScript() {  };
-    
     inline ~TestScript() { };
 
     UFUNCTION()
@@ -52,12 +53,12 @@ class TestScript : public NativeScript {
     virtual inline void Begin() override {};
 
     UFUNCTION()
-    inline Entity* GetEntity() { return new Entity();}
+    Entity* GetEntity() { return new Entity();}
 
     UFUNCTION()
     inline int GetNumber(int i, bool b) { 
        // std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
-        std::cout << "HOT RELOAD" << std::endl;
+        std::cout << "ROMA IS HOT" << std::endl;
         if (b) return i; 
         else return -i;
          

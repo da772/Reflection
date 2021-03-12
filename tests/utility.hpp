@@ -9,16 +9,20 @@
 #include <algorithm>
 #include <libloaderapi.h>
 #include <windows.h>
+#include <errhandlingapi.h>
 using dllptr = HMODULE;
 using addrptr = FARPROC;
+using ret_err = DWORD;
 #endif
 
 #if defined(__APPLE__)
 #include <sys/types.h>
 #include <unistd.h>
 #include <libproc.h>
+#include <dlfcn.h>
 using dllptr = void*;
 using addrptr = void*;
+using ret_err = char*;
 #endif
 
 #if defined(__linux__) 
@@ -26,6 +30,7 @@ using addrptr = void*;
 #include <dlfcn.h>
 using dllptr = void*;
 using addrptr = void*;
+using ret_err = char*;
 #endif
 
 #include <chrono>
@@ -35,8 +40,16 @@ inline uint64_t GetTimeNS() {
 }
 
 namespace utility {
+	ret_err dlerror() {
+		#if defined(__linux__) || defined(__APPLE__)
+			return ::dlerror();
+		#endif
+		#ifdef _WIN32
+			return ::GetLastError();
+		#endif
+	}
 	dllptr dlopen(const char* filename, int flags) {
-		#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 		return ::dlopen(filename, RTLD_NOW);
 		#endif
 #ifdef _WIN32
@@ -44,7 +57,7 @@ namespace utility {
 #endif
 	}
 	int dlclose(dllptr p) {
-		#ifdef __linux__
+		#if defined(__linux__) || defined(__APPLE__)
 			return ::dlclose(p);
 		#endif
 	#ifdef _WIN32
@@ -52,7 +65,7 @@ namespace utility {
 	#endif
 	}
 	addrptr dlsym(dllptr p, const char* name) {
-#ifdef __linux__ 
+#if defined(__linux__) || defined(__APPLE__)
 		return ::dlsym(p, name);
 #endif
 #ifdef _WIN32 
@@ -61,8 +74,11 @@ namespace utility {
 	}
 
 	std::string GetDLLExtensionName(std::string name) {
-		#ifdef __linux__
+#if defined(__linux__)
 		return "lib"+name+".so";
+#endif
+#if defined(__APPLE__)
+		return "lib"+name+".dylib";
 		#endif
 #ifdef _WIN32
 		return name + ".dll";

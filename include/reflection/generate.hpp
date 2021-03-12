@@ -16,7 +16,7 @@ namespace refl {
 				std::string ret_name;
 				std::vector<std::pair<uint32_t, std::string>> args_val;
 			};
-			static std::string get_class(const std::string& s, ::refl::err::err_hndl* err);
+			static std::string get_class(const std::string& s, size_t*, ::refl::err::err_hndl* err);
 			static std::pair<std::string, std::string> get_next_member(const std::string& s, size_t* pos);
 			static ufunction get_next_method(const std::string& s, const std::string& clss, size_t* pos,::refl::err::err_hndl* err);
 			static void reload_generation_map(const std::string& outputDir, const std::vector<std::string>& map);
@@ -43,12 +43,13 @@ namespace refl {
 
 				inline std::pair<std::string, std::string> generateM(const char* _in) {
 					std::string in(_in);
+					size_t pos = 0;
 					std::string s = "#pragma once\n#include \"reflection/reflection.hpp\"\n#include \"../";
-					std::string cls = impl::get_class(in, err);
+					std::string cls = impl::get_class(in, &pos, err);
 					s+= cls+".h\"\nclass " + cls + "_Generated : public refl::class_generation {\n ";
 					s+= "\tpublic:\n\tinline static void Load(::refl::store::storage* storage) {\n";
 					s+= "\t\tstorage->store(\""+cls+"\",{\""+cls+"\",{\n";
-					size_t pos = in.find("UPROPERTY()");
+					pos = in.find("UPROPERTY()");
 					while (pos != std::string::npos) {
 						std::pair<std::string, std::string> m = impl::get_next_member(in, &pos);
 						s+= "\t\t{\""+m.second+"\",{\""+m.second+"\",\""+m.first+"\",static_cast<refl::store::uproperty_type>("
@@ -174,7 +175,7 @@ namespace refl {
 				out << s;
 				out.close();
 			}
-			static std::string get_class(const std::string& in, ::refl::err::err_hndl* err) {
+			static std::string get_class(const std::string& in, size_t* pos, ::refl::err::err_hndl* err) {
 					size_t uclassPos = in.find("UCLASS()");
 
 					if (uclassPos == std::string::npos) {
@@ -200,7 +201,7 @@ namespace refl {
 					while (cC != ' ' && cC != '\n' && cC != ':' && cC != '\t' && cC != '{') {
 						cC = in[++nextSpace];
 					}
-
+					*pos = nextSpace;
 					return in.substr(clssStart, nextSpace-clssStart);
 			}
 

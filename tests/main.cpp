@@ -124,6 +124,7 @@ static void __LoadLib(refl::reflector& r) {
 	lib = utility::dlopen(loc.c_str(), 0);
 	if (!lib) {
 		std::cout << "INVALID HANDLE" << std::endl;
+		std::cout << dlerror() << std::endl;
 		return;
 	}
 	

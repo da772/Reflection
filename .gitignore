@@ -11,4 +11,7 @@
 /obj/
 Makefile
 *.make
+*.so
+*.dylib
+*.dll
 .DS_Store
