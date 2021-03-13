@@ -13,10 +13,11 @@
 static void Benchmark(refl::reflector&);
 static void __UnloadLib(refl::reflector& r);
 static void __LoadLib(refl::reflector& r);
-static void __GenerateLib(refl::reflector& r);
+static void __GenerateLib(const std::string&, const std::string&, refl::reflector& r);
 static dllptr lib = 0;
 
 int main() {
+	std::vector<std::string> scriptFiles = {"TestScript.h", "ExampleScript.h"};
 	refl::reflector reflect = refl::reflector();
 	reflect.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
 	reflect.SetOutputDir((files::GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
@@ -36,15 +37,20 @@ int main() {
 			if (lib) {
 				__UnloadLib(reflect);
 			}
-			__GenerateLib(reflect);
-			std::string buildOut = sys::compile_proj(files::GetParentExecuteableDir(3), "Reflection_Tests_Scripts");
+			reflect.Clear();
+			for (const std::string& s : scriptFiles)
+				__GenerateLib( (files::GetParentExecuteableDir(3) + "tests/scripts/"), s, reflect);
+			std::string buildOut = sys::build_proj(files::GetParentExecuteableDir(3), "GenerateMake");
 			if (buildOut.size() > 0) {
 				std::cout << buildOut << std::endl;
 			}
-			else {
-				std::cout << "BUILD SUCCESS\n" << std::endl;
-				__LoadLib(reflect);
-			}
+			std::cout << "Build Complete...\n" << std::endl;
+			std::string compileOut = sys::compile_proj(files::GetParentExecuteableDir(3), "Reflection_Tests_Scripts");
+			if (compileOut.size() > 0) {
+				std::cout << compileOut << std::endl;
+			} 
+			std::cout << "Compile Complete...\n" << std::endl;
+			__LoadLib(reflect);
 		}
 		if (userInput == 'l') {
 			__LoadLib(reflect);
@@ -53,7 +59,9 @@ int main() {
 			__UnloadLib(reflect);
 		}
 		if (userInput == 'g') {
-			__GenerateLib(reflect);
+			reflect.Clear();
+			for (const std::string& s : scriptFiles)
+				__GenerateLib( (files::GetParentExecuteableDir(3) + "tests/scripts/"), s, reflect);
 		}
 		if (userInput == 'q') {
 			if (lib) __UnloadLib(reflect);
@@ -85,36 +93,37 @@ static void Benchmark(refl::reflector& reflect) {
 	std::cout << "MAP PRINTED" << std::endl;
 	double ns = 0;
 	double n = 0;
-	int testSize = 100000;
 	{
 		uint64_t time = GetTimeNS();
 		refl::uClass uClss = reflect.CreateUClass("TestScript");
 		std::cout << "HERE" << std::endl;
 		//void* v1 = uClss.data();
 
-		int getNum = uClss.CallFunction<int>("GetNumber", 823, false); //CallPtrFunction<int>(storage, v1, "TestScript", "GetNumber", 823, false);
-		int* getInt2 = uClss.CallFunction<int*>("GetInt2");//CallPtrFunction<int*>(storage, v1, "TestScript", "GetInt2");
-		//std::cout << "GET NUM = " << std::to_string(getNum) << std::endl;
-
-		//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
+		int getNum = uClss.CallFunction<int>("GetNumber", 823, false); 
+		int* getInt2 = uClss.CallFunction<int*>("GetInt2");
+		std::vector<int> vec = uClss.GetMember<std::vector<int>>("vec");
+		for (int i = 0; i < vec.size(); i++) {
+			std::cout << "VEC["<<i<<"]= " << vec[i] << std::endl;
+		}
+		
 		*getInt2 = 55;
-		//std::cout << "GET INT = " << std::to_string(*getInt2) << std::endl;
-
 
 		std::string getString = uClss.CallFunction<std::string>("GetString");
-		//std::cout << getString << std::endl;
 		std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-		//std::cout << *getStringPtr << std::endl;
 		*getStringPtr = "NEW STRING";
 		getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-		//std::cout << *getStringPtr << std::endl;
-		//TestStruct getStruct = uClss.CallFunction<TestStruct>("GetStruct");
-		//std::cout << ts->i << std::endl;
+
+		refl::uClass exampleScript = uClss.CallFunction<refl::uClass>("GetExampleScript");
+		std::cout << "UCLASS RETREIEVED" << std::endl;
+		std::string n = exampleScript.GetMember<std::string>("name");
+		uint32_t id = exampleScript.GetMember<uint32_t>("id");
+		std::cout <<"Example Script: " << id << " name: " << n << std::endl;
+
 		time = GetTimeNS() - time;
 		//std::cout << "\n\n" << (double)time / 1e6 << " ms | " << time << " ns\n\n" << std::endl;
 		ns += (double)time / 1e6;
 	}
-	std::cout << "REFLECTION: " << ns / (double)testSize << "ms NATIVE: " << n / (double)testSize << " ms" << std::endl;
+	std::cout << "REFLECTION: " << ns  << "ms" << std::endl;
 
 	//std::cout << (ns < n ? "REFLECTION " : "NATIVE ") << " is " << (ns < n ? n / ns : ns / n) << "x faster" << std::endl;
 
@@ -160,8 +169,8 @@ static void __UnloadLib(refl::reflector& r) {
 	}
 }
 
-static void __GenerateLib(refl::reflector& r) {
-	std::string in = files::GetParentExecuteableDir(3) + "tests/scripts/TestScript.h";
+static void __GenerateLib(const std::string& path, const std::string& name, refl::reflector& r) {
+	std::string in = path+name;
 	std::ifstream t(in);
 	std::stringstream buffer;
 	buffer << t.rdbuf();

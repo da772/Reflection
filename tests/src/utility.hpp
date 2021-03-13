@@ -110,6 +110,23 @@ namespace sys {
 
 	std::string exec_command(const std::string& cmd);
 
+	std::string build_proj(const std::string& dir, const std::string& file) {
+		std::string cmd = "";
+		#if defined(__linux__) || defined(__APPLE__)
+		cmd += "cd \"" + dir + "\" && \"./build/"+file;
+			#ifdef __APPLE__
+			cmd+= "_Mac.command\" ";
+			#endif
+			#ifdef __linux__
+			cmd += "_Linux.sh\" ";
+			#endif
+		#endif
+		#if defined(_WIN32)
+			cmd += "cd \"" + dir + "\" && \"./build/"+file+"_Windows.bat\" ";
+		#endif
+		return exec_command(cmd);
+	}
+
 	std::string compile_proj(const std::string& dir, const std::string& file) {
 		::std::string cmd = "";
 #ifdef _WIN32
@@ -118,7 +135,7 @@ namespace sys {
 		cmd += _msBin + "\\MSBuild.exe\" \"" + dir + file + ".vcxproj\" /verbosity:quiet /nologo ";
 #endif
 #if defined (__linux__) || defined (__APPLE__)
-		cmd += "cd " + dir + " && make ";
+		cmd += "cd " + dir + " && make -s "+file + " ";
 #endif
 		const std::string config = BUILD_CONFIG;
 		if (config == "Release") {
@@ -141,7 +158,7 @@ namespace sys {
 		const ::std::string arch = BUILD_ARCHITECTURE;
 		if (arch == "x86_64") {
 #if defined (__linux__) || defined (__APPLE__)
-			cmd += "_x64";
+			cmd += "_x86_64";
 #endif
 #ifdef _WIN32
 			cmd += "/p:Platform=x64 ";
@@ -155,7 +172,7 @@ namespace sys {
 			cmd += "/p:Platform=Win32 ";
 #endif
 		}
-		std::cout << "RUNNING BUILD COMMAND: \n\n" << cmd << "\n\n" << std::endl;
+		std::cout << "RUNNING COMMAND: \n\n" << cmd << "\n\n" << std::endl;
 		return exec_command(cmd);
 
 	}
@@ -168,7 +185,7 @@ namespace sys {
 	std::string exec_command(const std::string& cmd) {
 #if defined(__linux__) || defined (__APPLE__)
 		char buffer[2048];
-		string result = "";
+		std::string result = "";
 
 		// Open pipe to file
 		FILE* pipe = popen(cmd.c_str(), "r");

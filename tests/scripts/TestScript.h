@@ -1,8 +1,10 @@
 #pragma once
 #include "NativeScript.h"
 #include "Entity.hpp"
-#include "MyPhone.h"
 
+#include "ExampleScript.h"
+
+#include <vector>
 #include <iostream>
 
 
@@ -17,7 +19,7 @@ class TestScript : public NativeScript {
 
     UCONSTRUCTOR()
     inline TestScript() {  };
-    inline ~TestScript() { };
+    inline ~TestScript() {  };
 
     UFUNCTION()
     virtual inline void Update() override {};
@@ -42,7 +44,7 @@ class TestScript : public NativeScript {
     uint64_t uint64 = 222;
 
     UPROPERTY()
-    std::vector<int> vec = {0, 1 , 2};
+    std::vector<int> vec = {1};
 
     UPROPERTY()
     bool bBool = false;
@@ -56,16 +58,16 @@ class TestScript : public NativeScript {
     UFUNCTION()
     Entity* GetEntity() { return new Entity();}
 
+    ExampleScript exampleScript = ExampleScript();
+
     UFUNCTION()
-    inline int GetNumber(int i, bool b) { 
-       // std::cout<<"GET NUMBER CALLED " << std::to_string(i) << " " << std::to_string(b) << std::endl;
-        Phone c;
-        std::cout << "SCOOOBY SNACKS" << std::endl;
-        std::cout << "NEW CAR: " << c.model << std::endl;
-        if (b) return i; 
-        else return -i;
-         
-        };
+    inline ExampleScript* GetExampleScript() {
+        std::cout << "GET EXAMPLE SCRIPT" << std::endl;
+        return &exampleScript;
+    }
+
+    UFUNCTION()
+    int GetNumber(int i, bool b);
 
     UFUNCTION()
     inline int* GetInt2() {

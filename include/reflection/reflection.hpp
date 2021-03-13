@@ -4,6 +4,8 @@
 #include "generation.hpp"
 #include "generate.hpp"
 
+#include <iostream>
+
 #if defined(_MSC_VER)
     //  Microsoft 
     #define __REFLECTION__EXPORT__ extern "C" __declspec(dllexport)
@@ -30,7 +32,7 @@ namespace refl {
 
 	class uClass {
 		public:
-		uClass(void* p, const std::string& n, ::refl::reflector* r);
+		uClass(void* p, const std::string& n, ::refl::reflector* r, bool destroy = false);
 		~uClass();
 		
 			template<typename T>
@@ -47,8 +49,9 @@ namespace refl {
 				*(T*)((uint8_t*)ptr + o) = value;
 			}
 			private:
+
 			template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
-			T _CallFunction(const std::string& name, const std::vector<void*>& vec) {
+			T __CallFunction(const std::string& name, const std::vector<void*>& vec) {
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 				T* _f = (T*)map.at(clazz).function_map.at(name).function(ptr, vec);
 				T f = *_f;
@@ -57,15 +60,38 @@ namespace refl {
 			}
 
 			template <typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
-			T _CallFunction(const std::string& name, const std::vector<void*>& vec) {
+			T __CallFunction(const std::string& name, const std::vector<void*>& vec) {
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 				void* _f = map.at(clazz).function_map.at(name).function(ptr, vec);
 				T f = (T)_f;
 				return f;
+			}
+
+			template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
+			T __CallFunction_uClass(const std::string& name, const std::vector<void*>& vec) {
+				
+				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
+				const ::refl::store::ufunction_struct& func = map.at(clazz).function_map.at(name);
+				void* _f = func.function(ptr, vec);
+				std::cout << "UCLASS: " << func.ret_name << std::endl;
+				std::string ret_name = func.ret_name;
+				ret_name.erase(ret_name.size()-1);
+				//T f = (T)_f;
+				return uClass(_f, ret_name, ref);
 
 			}
-			public:
 
+			template <typename T, typename std::enable_if<std::is_same<T, uClass>::value>::type* = nullptr>
+			T _CallFunction(const std::string& name, const std::vector<void*>& vec) {
+				return __CallFunction_uClass<T>(name, vec);
+			}
+
+			template <typename T, typename std::enable_if<!std::is_same<T, uClass>::value>::type* = nullptr>
+			T _CallFunction(const std::string& name, const std::vector<void*>& vec) {
+				return __CallFunction<T>(name, vec);
+			}
+
+			public:
 			template<typename T, typename ... Args>
 			inline T CallFunction(const std::string& name, Args&& ... args) {
 				std::vector<void*> vec = {(void*)&args...};
@@ -90,6 +116,7 @@ namespace refl {
 			void* ptr = nullptr;
 			::refl::reflector* ref;
 			::refl::store::storage* store;
+			bool destroy = false;
 			friend class ::refl::reflector;
 
 	};
@@ -99,6 +126,7 @@ namespace refl {
 			inline reflector() : err(), gen(&err), st(&err) {}
 			inline ~reflector() { }
 			inline void Generate(const char* in){ return gen.generate(in);}
+			inline void Clear(){ return gen.clear();}
 			inline void SetErrorCallback(void(*f)(const char*)) { err.setErrorCallback(f); }			
 			inline bool HasError() const { return err.HasError(); }
 			inline const char* GetError()  { return err.GetError();}
@@ -136,7 +164,7 @@ namespace refl {
 			inline uClass CreateUClass(const std::string& clazz, Args&& ... args) {
 				std::vector<void*> vec = {(void*)&args...};
 				void* t = __callfunc<void*>(nullptr, clazz, clazz,vec);
-				return uClass(t, clazz, this);
+				return uClass(t, clazz, this, true);
 			}
 
 			inline void DestroyUClass(uClass& c) {
@@ -149,11 +177,11 @@ namespace refl {
 	};
 
 	inline uClass::~uClass() {
-		if (ptr != nullptr) {
+		if (destroy && ptr != nullptr) {
 			ref->DestroyUClass(*this);
 		}
 	}
-	inline uClass::uClass(void* p, const std::string& n, ::refl::reflector* r) : clazz(n), ptr(p), ref(r), store(r->GetStorage()) {
+	inline uClass::uClass(void* p, const std::string& n, ::refl::reflector* r, bool d) : clazz(n), ptr(p), ref(r), store(r->GetStorage()), destroy(d) {
 
 	};
 

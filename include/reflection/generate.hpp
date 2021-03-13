@@ -26,9 +26,8 @@ namespace refl {
 		class generator {
 			public:
 				inline generator(::refl::err::err_hndl* error) : err(error) {}
-
+				inline void clear() { clss.clear(); }
 				inline void generate(const char* in) {
-					clss.clear();
 					std::ifstream t(in);
 					std::stringstream buffer;
 					buffer << t.rdbuf();
