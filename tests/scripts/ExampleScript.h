@@ -15,7 +15,7 @@ class ExampleScript : public NativeScript {
     UPROPERTY()
     std::string name = "My Script";
     UPROPERTY()
-    uint32_t id = 23123;
+    uint32_t id = 42069;
 
 
 

@@ -99,6 +99,11 @@ namespace refl {
 							s+= "\t\t{\"~constructor\",{\"~constructor\",\"void\",static_cast<refl::store::uproperty_type>("+std::to_string(static_cast<uint32_t>(store::GetTypeInt("void")))+"),{},";
 							s+= "[](void* ptr, std::vector<void*> args) {"+cls+"* p = ("+cls+"*)ptr; delete p; return nullptr;} }}";
 						}
+						else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::uclass_ref) {
+							s+= "void* v = &(*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							s+= impl::set_method_args(f);
+							s+="); return (void*)v; } }}";
+						}
 						else {
 							s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
 							s+= impl::set_method_args(f);
@@ -134,6 +139,10 @@ namespace refl {
 					::refl::store::uproperty_type _type = static_cast<::refl::store::uproperty_type>(f.ret_val);
 					if (_type == ::refl::store::uproperty_type::_ptr || _type == ::refl::store::uproperty_type::uclass_ptr) {
 						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
+					} else if (_type == ::refl::store::uproperty_type::uclass_ref){
+						std::string type = p.second;
+						type.erase(type.size()-1);
+						s += "("+type+"&)(*("+type+"*)args["+std::to_string(i)+"])";
 					} else {
 						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
 					}
@@ -280,6 +289,9 @@ namespace refl {
 					if (cC == '*') {
 						typeName += "*";
 					}
+					else if (cC == '&') {
+						typeName += "&";
+					}
 					cC = in[++uProp];
 				}
 				nextSpace = uProp;
@@ -291,11 +303,13 @@ namespace refl {
 				uProp = nextSpace+1;
 				uint32_t spacePos = 0;
 				while (cC != ')') {
+					/*
 					if (cC == '&') {
 						err->setErrorStr(std::string(memName + "Error: passing by reference not allowed use pointer!").c_str() );
 						*pos = std::string::npos;
 						return {};
 					}
+					*/
 					if (cC != ' ' && cC != '\t' && cC != '\n' && spacePos != 0) {
 						spacePos = 0;
 						uProp = nextSpace;
@@ -335,9 +349,12 @@ namespace refl {
 					return get_next_method(in, clss, pos, err);
 				}
 				uProp = nextSpace;
-				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' ) {
+				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' || cC == '&' ) {
 					if (cC == '*') {
 						typeName += "*";
+					}
+					else if (cC == '&') {
+						typeName += "&";
 					}
 					cC = in[++uProp];
 				}
@@ -350,11 +367,13 @@ namespace refl {
 				uProp = nextSpace+1;
 				uint32_t spacePos = 0;
 				while (cC != ')') {
+					/*
 					if (cC == '&') {
 						err->setErrorStr(std::string(memName + "Error: passing by reference not allowed use pointer!").c_str() );
 						*pos = in.find("UFUNCTION()", newL);
 						return {};
 					}
+					*/
 					if (cC != ' ' && cC != '\t' && cC != '\n' && spacePos != 0) {
 						spacePos = 0;
 						uProp = nextSpace;

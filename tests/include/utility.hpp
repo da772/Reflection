@@ -2,6 +2,9 @@
 #include <cstring>
 #include <string>
 
+#include "reflection/reflection.hpp"
+#include <iostream>
+
 #if defined(_WIN32)
 #include <locale>
 #include <codecvt>
@@ -46,7 +49,7 @@ inline uint64_t GetTimeNS() {
 
 namespace dll {
 
-	void movePDB(const std::string& dir, const std::string& name) {
+	inline void movePDB(const std::string& dir, const std::string& name) {
 		std::string loc = dir + "cpy_" + name + ".pdb";
 		std::ifstream  src(dir + name + ".pdb", std::ios::binary);
 		std::ofstream  dst(loc, std::ios::binary);
@@ -60,7 +63,7 @@ namespace dll {
 		::remove((dir + name + ".pdb").c_str());
 	}
 
-	ret_err dlerror() {
+	inline ret_err dlerror() {
 #if defined(__linux__) || defined(__APPLE__)
 		return ::dlerror();
 #endif
@@ -68,7 +71,7 @@ namespace dll {
 		return ::GetLastError();
 #endif
 	}
-	dllptr dlopen(const char* filename, int flags) {
+	inline dllptr dlopen(const char* filename, int flags) {
 #if defined(__linux__) || defined(__APPLE__)
 		return ::dlopen(filename, RTLD_NOW);
 #endif
@@ -76,7 +79,7 @@ namespace dll {
 		return ::LoadLibraryA(filename);
 #endif
 	}
-	int dlclose(dllptr p) {
+	inline  int dlclose(dllptr p) {
 #if defined(__linux__) || defined(__APPLE__)
 		return ::dlclose(p);
 #endif
@@ -84,7 +87,7 @@ namespace dll {
 		return (int)FreeLibrary(p);
 #endif
 	}
-	addrptr dlsym(dllptr p, const char* name) {
+	inline  addrptr dlsym(dllptr p, const char* name) {
 #if defined(__linux__) || defined(__APPLE__)
 		return ::dlsym(p, name);
 #endif
@@ -93,7 +96,7 @@ namespace dll {
 #endif
 	}
 
-	std::string GetDLLExtensionName(std::string name) {
+	inline std::string GetDLLExtensionName(std::string name) {
 #if defined(__linux__)
 		return "lib" + name + ".so";
 #endif
@@ -106,11 +109,18 @@ namespace dll {
 	}
 }
 
+#ifndef BUILD_CONFIG
+#define BUILD_CONFIG ""
+#endif
+#ifndef BUILD_ARCHITECTURE
+#define BUILD_ARCHITECTURE ""
+#endif
+
 namespace sys {
 
-	std::string exec_command(const std::string& cmd);
+	inline std::string exec_command(const std::string& cmd);
 
-	std::string build_proj(const std::string& dir, const std::string& file) {
+	inline std::string build_proj(const std::string& dir, const std::string& file) {
 		std::string cmd = "";
 		#if defined(__linux__) || defined(__APPLE__)
 		cmd += "cd \"" + dir + "\" && \"./build/"+file;
@@ -127,7 +137,7 @@ namespace sys {
 		return exec_command(cmd);
 	}
 
-	std::string compile_proj(const std::string& dir, const std::string& file) {
+	inline std::string compile_proj(const std::string& dir, const std::string& file) {
 		::std::string cmd = "";
 #ifdef _WIN32
 		std::string _msBin = MS_xstr(MS_BUILD_BIN);
@@ -178,11 +188,11 @@ namespace sys {
 	}
 
 #ifdef _WIN32
-	PROCESS_INFORMATION CreateChildProcess(const std::string& cmd, HANDLE _ERR_WR, HANDLE _OUT_WR);
-	std::string ReadFromPipe(HANDLE err_RD, HANDLE out_RD);
+	inline PROCESS_INFORMATION CreateChildProcess(const std::string& cmd, HANDLE _ERR_WR, HANDLE _OUT_WR);
+	inline std::string ReadFromPipe(HANDLE err_RD, HANDLE out_RD);
 #endif
 
-	std::string exec_command(const std::string& cmd) {
+	inline std::string exec_command(const std::string& cmd) {
 #if defined(__linux__) || defined (__APPLE__)
 		char buffer[2048];
 		std::string result = "";
@@ -235,7 +245,7 @@ namespace sys {
 #endif
 	}
 #ifdef _WIN32
-	PROCESS_INFORMATION CreateChildProcess(const std::string& cmd, HANDLE _ERR_WR, HANDLE _OUT_WR) {
+	inline PROCESS_INFORMATION CreateChildProcess(const std::string& cmd, HANDLE _ERR_WR, HANDLE _OUT_WR) {
 		PROCESS_INFORMATION piProcInfo;
 		STARTUPINFOA siStartInfo;
 		bool bSuccess = FALSE;
@@ -281,7 +291,7 @@ namespace sys {
 #endif
 
 #ifdef _WIN32
-	std::string ReadFromPipe(HANDLE err_RD, HANDLE out_RD) {
+	inline std::string ReadFromPipe(HANDLE err_RD, HANDLE out_RD) {
 		DWORD dwRead;
 		CHAR* chBuf = (CHAR*)calloc(2048, sizeof(CHAR));
 		bool bSuccess = FALSE;
@@ -367,8 +377,7 @@ namespace files {
 	}
 
 
-	inline
-		std::string GetParentExecuteableDir(int levelsUp)
+	inline std::string GetParentExecuteableDir(int levelsUp)
 	{
 		const std::string& exePath = GetExecutableDir();
 		std::string dirPath = exePath;
@@ -387,5 +396,60 @@ namespace files {
 		}
 
 		return dirPath + "/";
+	}
+}
+
+
+inline void __LoadLib(dllptr* lib, refl::reflector& r) {
+	if (*lib) {
+		std::cout << "LIB ALREADY LOADED" << std::endl;
+		return;
+	}
+	std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
+	std::ifstream src(files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+#ifdef _WIN32
+	dll::movePDB(files::GetParentExecuteableDir(0), "Reflection_Tests_Scripts");
+#endif
+	std::ofstream  dst(loc, std::ios::binary);
+	dst << src.rdbuf();
+	dst.close();
+	*lib = dll::dlopen(loc.c_str(), 0);
+	if (!lib) {
+		std::cout << "INVALID HANDLE: " << dll::dlerror() << std::endl;
+		return;
+	}
+	
+	void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(dll::dlsym(*lib, "__ReflectionMap__loadGeneratedFiles"));
+	if (!func_ptr) {
+		std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
+		dll::dlclose(lib);
+		lib = 0;
+		return;
+	}
+	(*func_ptr)(r.GetStorage());
+}
+
+inline void __UnloadLib(dllptr* lib, refl::reflector& r) {
+	if (*lib) {
+		void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(dll::dlsym(*lib, "__ReflectionMap__unloadGeneratedFiles"));
+		if (func_ptr) {
+			(*func_ptr)(r.GetStorage());
+		}
+		dll::dlclose(*lib);
+		*lib = 0;
+		std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
+		::remove(loc.c_str());
+	}
+}
+
+inline void __GenerateLib(const std::string& path, const std::string& name, refl::reflector& r) {
+	std::string in = path+name;
+	std::ifstream t(in);
+	std::stringstream buffer;
+	buffer << t.rdbuf();
+	std::cout << in << std::endl;
+	r.Generate(in.c_str());
+	if (r.HasError()) {
+		std::cout << r.GetError() << std::endl;
 	}
 }

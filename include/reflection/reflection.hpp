@@ -4,8 +4,6 @@
 #include "generation.hpp"
 #include "generate.hpp"
 
-#include <iostream>
-
 #if defined(_MSC_VER)
     //  Microsoft 
     #define __REFLECTION__EXPORT__ extern "C" __declspec(dllexport)
@@ -20,26 +18,43 @@
     #define __REFLECTION__IMPORT__
 #endif
 
-
 namespace refl {
-/*
-	namespace impl {
-		extern void __loadGeneratedFiles(refl::store::storage* storage);
-		extern void __unloadGeneratedFiles(refl::store::storage* storage);
-	}
-*/	
+
 	class reflector;
 
 	class uClass {
 		public:
 		uClass(void* p, const std::string& n, ::refl::reflector* r, bool destroy = false);
 		~uClass();
-		
-			template<typename T>
-			inline T GetMember(const std::string& name) {
+
+			template <typename T, typename std::enable_if<!std::is_reference<T>::value>::type* = nullptr>
+			inline typename std::remove_reference<T>::type& __GetMember(const std::string& name) {
+				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
+				uintptr_t o = map.at(clazz).property_map.at(name).offset;
+				return (T&)(*(T*)((uint8_t*)ptr + o));
+			}
+
+			template <typename T, typename std::enable_if<std::is_reference<T>::value>::type* = nullptr>
+			inline typename std::remove_reference<T>::type& __GetMember(const std::string& name) {
+				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
+				uintptr_t o = map.at(clazz).property_map.at(name).offset;
+				return (T&)(*(typename std::remove_reference<T>::type*)((uint8_t*)ptr + o));
+			}
+
+			template <typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
+			inline T _GetMember(const std::string& name) {
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 				uintptr_t o = map.at(clazz).property_map.at(name).offset;
 				return *(T*)((uint8_t*)ptr + o);
+			}
+			template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
+			inline typename std::remove_reference<T>::type& _GetMember(const std::string& name) {
+				return __GetMember<T>(name);
+			}
+
+			template<typename T>
+			inline typename std::conditional<std::is_pointer<T>::value, T, typename std::remove_reference<T>::type&>::type GetMember(const std::string& name) {
+				return _GetMember<T>(name);
 			}
 
 			template<typename T>
@@ -50,13 +65,24 @@ namespace refl {
 			}
 			private:
 
-			template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
-			T __CallFunction(const std::string& name, const std::vector<void*>& vec) {
+			template <typename T, typename std::enable_if<std::is_reference<T>::value>::type* = nullptr>
+			T ___CallFunction(const std::string& name, const std::vector<void*>& vec) {
+				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
+				void* _f = map.at(clazz).function_map.at(name).function(ptr, vec);
+				T f = (T)(*(typename std::remove_reference<T>::type*)_f);
+				return f;
+			}
+			template <typename T, typename std::enable_if<!std::is_reference<T>::value>::type* = nullptr>
+			T ___CallFunction(const std::string& name, const std::vector<void*>& vec) {
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 				T* _f = (T*)map.at(clazz).function_map.at(name).function(ptr, vec);
 				T f = *_f;
 				delete _f;
 				return f;
+			}
+			template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
+			T __CallFunction(const std::string& name, const std::vector<void*>& vec) {
+				return ___CallFunction<T>(name, vec);
 			}
 
 			template <typename T, typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr>
@@ -69,17 +95,14 @@ namespace refl {
 
 			template <typename T, typename std::enable_if<!std::is_pointer<T>::value>::type* = nullptr>
 			T __CallFunction_uClass(const std::string& name, const std::vector<void*>& vec) {
-				
 				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
 				const ::refl::store::ufunction_struct& func = map.at(clazz).function_map.at(name);
 				void* _f = func.function(ptr, vec);
-				std::cout << "UCLASS: " << func.ret_name << std::endl;
 				std::string ret_name = func.ret_name;
 				ret_name.erase(ret_name.size()-1);
-				//T f = (T)_f;
 				return uClass(_f, ret_name, ref);
-
 			}
+			
 
 			template <typename T, typename std::enable_if<std::is_same<T, uClass>::value>::type* = nullptr>
 			T _CallFunction(const std::string& name, const std::vector<void*>& vec) {
@@ -93,9 +116,9 @@ namespace refl {
 
 			public:
 			template<typename T, typename ... Args>
-			inline T CallFunction(const std::string& name, Args&& ... args) {
+			inline typename std::conditional< (std::is_void<T>::value), void*, T>::type CallFunction(const std::string& name, Args&& ... args) {
 				std::vector<void*> vec = {(void*)&args...};
-				return _CallFunction<T>(name, vec);
+				return _CallFunction<typename std::conditional< (std::is_void<T>::value), void*, T>::type>(name, vec);
 			}
 
 			template<typename ... Args>

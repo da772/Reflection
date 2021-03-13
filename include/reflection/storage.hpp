@@ -17,7 +17,7 @@ namespace refl {
             
         enum class uproperty_type : uint32_t {
             NONE = 0, uclass, uclass_ptr, _void, _bool, _int, _uint, _char, _uchar, _ptr, _int8_t, _int16_t, _int32_t, _int64_t, _uint8_t,
-            _uint16_t, _uint32_t, _uint64_t, constructor
+            _uint16_t, _uint32_t, _uint64_t, constructor, uclass_ref
         };
 
         namespace impl {
@@ -32,9 +32,10 @@ namespace refl {
         inline uint32_t GetTypeInt(const std::string& s) {
             if (impl::type_map.find(s) != impl::type_map.end()) {
                 return static_cast<uint32_t>(impl::type_map[s]);
-            }
-            if (s.find("*") != std::string::npos) {
+            } else if (s.find("*") != std::string::npos) {
                 return static_cast<uint32_t>(uproperty_type::uclass_ptr);
+            } else if (s.find("&") != std::string::npos) {
+                return static_cast<uint32_t>(uproperty_type::uclass_ref);
             }
             return static_cast<uint32_t>(uproperty_type::uclass);
         }
