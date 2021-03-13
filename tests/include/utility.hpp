@@ -132,8 +132,11 @@ namespace sys {
 			#endif
 		#endif
 		#if defined(_WIN32)
-			cmd += "cd \"" + dir + "\" && \"./build/"+file+"_Windows.bat\" ";
+			std::string drive = dir.substr(0, 2);
+			cmd += dir + "build/" + file + "_Windows.bat";
+			//cmd += "" + dir + "build\" && \""+file+"_Windows.bat\" ";
 		#endif
+			std::cout << "BUILD CMD: " << cmd << std::endl;
 		return exec_command(cmd);
 	}
 
@@ -283,7 +286,7 @@ namespace sys {
 		CloseHandle(piProcInfo.hThread);
 		// If an error occurs, exit the application. 
 		if (!bSuccess) {
-			std::cout << "ERROR" << std::endl;
+			std::cout << GetLastError() << std::endl;
 		}
 		return piProcInfo;
 	}
@@ -381,9 +384,6 @@ namespace files {
 		const std::string& exePath = GetExecutableDir();
 		std::string dirPath = exePath;
 
-
-		//levelsUp+=3;
-
 		for (int i = 0; i < levelsUp; i++) {
 			uint32_t slash = (uint32_t)dirPath.find_last_of("/\\");
 			if (slash >= 0) {
@@ -421,7 +421,7 @@ inline void __LoadLib(dllptr* lib, refl::reflector& r) {
 	void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(dll::dlsym(*lib, "__ReflectionMap__loadGeneratedFiles"));
 	if (!func_ptr) {
 		std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
-		dll::dlclose(lib);
+		dll::dlclose(*lib);
 		lib = 0;
 		return;
 	}
