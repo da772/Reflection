@@ -13,6 +13,5 @@
 		TestScript_Generated::Unload(storage);
 		ExampleScript_Generated::Unload(storage);
 		MainScript_Generated::Unload(storage);
-		std::cout << "UNLOAD MAP" << std::endl;
 	}
 

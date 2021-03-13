@@ -4,6 +4,8 @@
 #include "reflection/reflection.hpp"
 #include "utility.hpp"
 
+#include <vector>
+
 UCLASS()
 class MainScript : public NativeScript {
     UCLASS_BODY()
@@ -22,7 +24,13 @@ class MainScript : public NativeScript {
     refl::reflector* reflect;
 
     UPROPERTY()
+    int m;
+
+    UPROPERTY()
     dllptr lib;
+
+    UPROPERTY()
+    std::vector<std::string>* scriptFiles;
 
     UPROPERTY()
     int exitCode = 0;

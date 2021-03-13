@@ -53,7 +53,7 @@ class TestScript : public NativeScript {
     TestStruct myStruct; 
 
     UFUNCTION()
-    virtual inline void Begin() override { std::cout << "CALLED BEGIN" << std::endl;};
+    virtual inline void Begin() override { };
 
     UFUNCTION()
     Entity* GetEntity() { return new Entity();}
@@ -62,7 +62,6 @@ class TestScript : public NativeScript {
 
     UFUNCTION()
     inline ExampleScript* GetExampleScript() {
-        std::cout << "GET EXAMPLE SCRIPT" << std::endl;
         return &exampleScript;
     }
 
@@ -76,6 +75,11 @@ class TestScript : public NativeScript {
         r = 10;
         return int2;
     }
+
+    UFUNCTION()
+    void Benchmark();
+
+    uint64_t benchMarkInt = 0;
 
     UFUNCTION()
     int GetNumber(int i, bool b);

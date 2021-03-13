@@ -194,23 +194,22 @@ namespace sys {
 
 	inline std::string exec_command(const std::string& cmd) {
 #if defined(__linux__) || defined (__APPLE__)
-		char buffer[2048];
+		char buffer[2048] = {0};
 		std::string result = "";
 
 		// Open pipe to file
-		FILE* pipe = popen(cmd.c_str(), "r");
+		FILE* pipe = popen((cmd + " 2>&1").c_str(), "r");
 		if (!pipe) {
 			return "popen failed!";
 		}
 
 		// read till end of process:
 		while (!feof(pipe)) {
-
 			// use buffer to read and add to result
-			if (fgets(buffer, 128, pipe) != NULL)
+			if (fgets(buffer, 128, pipe) != NULL) {
 				result += buffer;
+			}
 		}
-
 		pclose(pipe);
 		return result;
 #endif
