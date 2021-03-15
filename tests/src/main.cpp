@@ -11,6 +11,12 @@
 #include "utility.hpp"
 #include "reflection/reflection.hpp"
 
+#ifdef TESTS_LINK_TYPE
+	#if (TESTS_LINK_TYPE == 0)
+		#include "Reflection.map.generated.h"
+	#endif
+#endif
+
 
 static bool ReloadLib(dllptr* lib, refl::reflector& reflect,  const std::vector<std::string>& scriptFiles);
 
@@ -29,16 +35,20 @@ int main() {
 			return 0;
 		init = ReloadLib(&lib, reflect, scriptFiles);
 	}
-	refl::uClass mainScript = reflect.CreateUClass("MainScript");
-	mainScript.SetMember<refl::reflector*>("reflect", &reflect);
-	int& code = mainScript.GetMember<int>("exitCode");
-	mainScript.SetMember<std::vector<std::string>*>("scriptFiles", &scriptFiles);
+	
 	while (true) {	
-		mainScript.CallFunction<void>("Run");
-		if (code == 0) {
+		int* code;
+		{
+			refl::uClass mainScript = reflect.CreateUClass("MainScript");
+			mainScript.SetMember<refl::reflector*>("reflect", &reflect);
+			code = &mainScript.GetMember<int>("exitCode");
+			mainScript.SetMember<std::vector<std::string>*>("scriptFiles", &scriptFiles);
+			mainScript.CallFunction<void>("Run");
+		}
+		if (*code == 0) {
 			break;
-		} else if (code == 1) {
-			code = 0;
+		} else if (*code == 1) {
+			*code = 0;
 			bool reload = ReloadLib(&lib, reflect, scriptFiles);
 			while (!reload) {
 				char s = 0;
@@ -55,6 +65,10 @@ int main() {
 };
 
 static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<std::string>& scriptFiles) {
+#if (TESTS_LINK_TYPE == 1)
+		if (*lib) {
+			__UnloadLib(lib, reflect);
+		}
 		reflect.Clear();
 		for (const std::string& s : scriptFiles)
 			__GenerateLib((files::GetParentExecuteableDir(3) + "tests/scripts/"), s, reflect);
@@ -67,16 +81,25 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 		if (compileOut.size() > 0) {
 			if (compileOut.find("error") != std::string::npos) {
 				std::cout << compileOut << std::endl;
+				if (compileOut.find("insufficient") != std::string::npos) {
+					std::cout << "IS DEBUGGER ATTATCHED?" << std::endl;
+				}
 				return false;
 			}
-		}
-		if (*lib) {
-			__UnloadLib(lib, reflect);
 		}
 		std::cout << "Compile Complete...\n" << std::endl;
 		__LoadLib(lib,reflect);
 		std::cout << "LOAD DLL" << std::endl;
 		return true;
+#else
+	if (*lib) {
+		__ReflectionMap__unloadGeneratedFiles(reflect.GetStorage());
+		*lib = (dllptr)0;
+	}
+	__ReflectionMap__loadGeneratedFiles(reflect.GetStorage());
+	*lib = (dllptr)1;
+	return true;
+#endif
 }
 
 

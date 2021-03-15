@@ -41,7 +41,8 @@ using ret_err = char*;
 
 #include <chrono>
 
-
+static std::string __DLL_prefix = "cpy_";
+static bool _renameDLL = false;
 
 inline uint64_t GetTimeNS() {
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();;
@@ -49,8 +50,9 @@ inline uint64_t GetTimeNS() {
 
 namespace dll {
 
-	inline void movePDB(const std::string& dir, const std::string& name) {
-		std::string loc = dir + "cpy_" + name + ".pdb";
+	inline void movePDB(const std::string& dir, const std::string& name, const std::string& newPrefix, bool deleteOld) {
+
+		std::string loc = dir + newPrefix + name + ".pdb";
 		std::ifstream  src(dir + name + ".pdb", std::ios::binary);
 		std::ofstream  dst(loc, std::ios::binary);
 		if (src.fail()) {
@@ -60,7 +62,9 @@ namespace dll {
 		dst << src.rdbuf();
 		dst.close();
 		src.close();
-		::remove((dir + name + ".pdb").c_str());
+		if (deleteOld)
+			::remove((dir + name + ".pdb").c_str());
+		
 	}
 
 	inline ret_err dlerror() {
@@ -404,15 +408,20 @@ inline void __LoadLib(dllptr* lib, refl::reflector& r) {
 		std::cout << "LIB ALREADY LOADED" << std::endl;
 		return;
 	}
-	std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
-	std::ifstream src(files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+	
+	std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName((_renameDLL ? __DLL_prefix : "" )+"Reflection_Tests_Scripts");
+	if (_renameDLL) {
+		std::ifstream src(files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+
+		std::ofstream  dst(loc, std::ios::binary);
+		dst << src.rdbuf();
+		dst.close();
+	}
 #ifdef _WIN32
-	dll::movePDB(files::GetParentExecuteableDir(0), "Reflection_Tests_Scripts");
+	//dll::movePDB(files::GetParentExecuteableDir(0), "Reflection_Tests_Scripts", "_", true);
 #endif
-	std::ofstream  dst(loc, std::ios::binary);
-	dst << src.rdbuf();
-	dst.close();
 	*lib = dll::dlopen(loc.c_str(), 0);
+
 	if (!lib) {
 		std::cout << "INVALID HANDLE: " << dll::dlerror() << std::endl;
 		return;
@@ -436,8 +445,9 @@ inline void __UnloadLib(dllptr* lib, refl::reflector& r) {
 		}
 		dll::dlclose(*lib);
 		*lib = 0;
-		std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("cpy_Reflection_Tests_Scripts");
-		::remove(loc.c_str());
+		std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName((_renameDLL ? __DLL_prefix : "" )+"Reflection_Tests_Scripts");
+		if (_renameDLL)
+			::remove(loc.c_str());
 	}
 }
 

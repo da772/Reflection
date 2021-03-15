@@ -54,10 +54,13 @@ void MainScript::Benchmark() {
 			time = GetTimeNS() - time;
 			ns += time;
 
+			
 			uClss.CallFunction<void>("Error!!"); // Catch this error
 
-		} catch (std::exception& e) {
-			std::cout << "REFLECTION ERROR: " <<  e.what() << std::endl;
+		} 
+		catch (std::exception& e) 
+		{
+			std::cout << "SEKEE REFLECTION ERROR: " <<  e.what() << std::endl;
 		}
 
 		try 
@@ -86,7 +89,7 @@ void MainScript::Benchmark() {
 			n += time;
 			// delete exampleScript; Cant catch delete errors
 		} catch (std::exception& e) {
-			std::cout << "NATIVE ERROR: " << e.what() << std::endl;
+			std::cout << "NASDATIVE ERROR: " << e.what() << std::endl;
 		}
 	}
 

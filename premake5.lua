@@ -1,4 +1,8 @@
 workspace "Reflection"
+    newoption {
+        trigger = "hot-reload",
+        description = "allows for scripts to reloaded on the fly"
+    }
     architecture "x86_64"
     platforms 
     {
@@ -14,13 +18,20 @@ workspace "Reflection"
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
     project "Reflection_Tests"
-        kind "ConsoleApp"
         language "C++"
-            cppdialect "C++11"
-        staticruntime "off"
+        cppdialect "C++11"
         targetdir ("%{prj.location}/bin/" .. outputdir .. "/%{prj.name}")
         objdir ("%{prj.location}/obj/" .. outputdir .. "/%{prj.name}")
 
+        if _OPTIONS['hot-reload'] then
+            kind "ConsoleApp"
+            staticruntime "off"
+        else
+        configuration "not hot-reload"
+            kind "ConsoleApp"
+            staticruntime "on"
+        end
+        
         files 
         {
             "tests/src/*.cpp",
@@ -34,12 +45,36 @@ workspace "Reflection"
             "tests",
             "tests/include"
         }
+        if _OPTIONS['hot-reload'] then	
+            defines
+            {
+                "TESTS_LINK_TYPE=1"
+            }
+        else
+        configuration "not hot-reload"
+            defines
+            {
+                "TESTS_LINK_TYPE=0"
+            }
+            links 
+            {
+                "Reflection_Tests_Scripts"
+            }
+            includedirs
+            {
+                "tests/scripts/Generated"
+            }
+        end
 
         filter "system:linux"
-            links
-            {
-                "dl"
-            }
+            if _OPTIONS['hot-reload'] then
+                links
+                {
+                    "dl"
+                }
+            end
+            
+            
         filter "system:windows"
             defines
             {
@@ -75,12 +110,23 @@ workspace "Reflection"
             }
     
     project "Reflection_Tests_Scripts"
-        kind "SharedLib"
         language "C++"
-            cppdialect "C++11"
-        staticruntime "off"
+        cppdialect "C++11"    
+    
+        if _OPTIONS['hot-reload'] then	
+            kind "SharedLib"
+            staticruntime "off"
+        else
+        configuration "not hot-reload"
+            kind "StaticLib"
+            staticruntime "on"
+        end
+       
+        
+        
         targetdir ("%{prj.location}/bin/" .. outputdir .. "/Reflection_Tests")
         objdir ("%{prj.location}/obj/" .. outputdir .. "/Reflection_Tests")
+
         files
         {
             "tests/scripts/**.cpp",
@@ -101,6 +147,7 @@ workspace "Reflection"
                 --"XCOPY /I /E /S /Y /F \"$(TargetDir)%{prj.name}.pdb\" \"bin/" .. outputdir .. "/Reflection_Tests/\"",
                 --"del /F \"$(TargetDir)%{prj.name}.pdb\""
             }
+            debugcommand("%{prj.location}/bin/" .. outputdir .. "/Reflection_Tests")
     
         filter "platforms:x86"
             architecture "x86"
