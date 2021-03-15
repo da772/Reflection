@@ -27,7 +27,6 @@ workspace "Reflection"
             kind "ConsoleApp"
             staticruntime "off"
         else
-        configuration "not hot-reload"
             kind "ConsoleApp"
             staticruntime "on"
         end
@@ -51,7 +50,6 @@ workspace "Reflection"
                 "TESTS_LINK_TYPE=1"
             }
         else
-        configuration "not hot-reload"
             defines
             {
                 "TESTS_LINK_TYPE=0"
@@ -68,10 +66,10 @@ workspace "Reflection"
 
         filter "system:linux"
             if _OPTIONS['hot-reload'] then
-                links
-                {
-                    "dl"
-                }
+            links
+            {
+                "dl"
+            }
             end
             
             
@@ -117,7 +115,6 @@ workspace "Reflection"
             kind "SharedLib"
             staticruntime "off"
         else
-        configuration "not hot-reload"
             kind "StaticLib"
             staticruntime "on"
         end
@@ -154,7 +151,6 @@ workspace "Reflection"
     
         filter "platforms:x86_64"
             architecture "x86_64"
-    
     
         filter "configurations:Debug"
             runtime "Debug"

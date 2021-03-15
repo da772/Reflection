@@ -53,14 +53,12 @@ void MainScript::Benchmark() {
 			iRef = 18832;
 			time = GetTimeNS() - time;
 			ns += time;
-
-			
 			uClss.CallFunction<void>("Error!!"); // Catch this error
 
 		} 
 		catch (std::exception& e) 
 		{
-			std::cout << "SEKEE REFLECTION ERROR: " <<  e.what() << std::endl;
+			std::cout << "REFLECTION ERROR: " <<  e.what() << std::endl;
 		}
 
 		try 
