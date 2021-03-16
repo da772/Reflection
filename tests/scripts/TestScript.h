@@ -79,6 +79,7 @@ class TestScript : public NativeScript {
     UFUNCTION()
     void Benchmark();
 
+
     uint64_t benchMarkInt = 0;
 
     UFUNCTION()
@@ -99,6 +100,10 @@ class TestScript : public NativeScript {
     inline TestStruct GetStruct() {
         return TestStruct();
     }
+
+
+	UFUNCTION()
+	inline void __TEST(TestStruct t) {};
 
 /*
     inline TestScript GetScript() {

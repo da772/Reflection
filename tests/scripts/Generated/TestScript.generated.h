@@ -30,6 +30,7 @@ class TestScript_Generated : public refl::class_generation {
 		{"GetInt2",{"GetInt2","int*",static_cast<refl::store::uproperty_type>(2),{},[](void* ptr, std::vector<void*> args) {int* v = (*((TestScript*)ptr).*(&TestScript::GetInt2))(); return (void*)v; } }},
 		{"GetString",{"GetString","std::string",static_cast<refl::store::uproperty_type>(1),{},[](void* ptr, std::vector<void*> args) {std::string v = (*((TestScript*)ptr).*(&TestScript::GetString))(); std::string* _ptr = new std::string(v); return (void*)_ptr; } }},
 		{"GetStruct",{"GetStruct","TestStruct",static_cast<refl::store::uproperty_type>(1),{},[](void* ptr, std::vector<void*> args) {TestStruct v = (*((TestScript*)ptr).*(&TestScript::GetStruct))(); TestStruct* _ptr = new TestStruct(v); return (void*)_ptr; } }},
+		{"__TEST",{"__TEST","void",static_cast<refl::store::uproperty_type>(3),{{static_cast<::refl::store::uproperty_type>(1),"TestStruct"} },[](void* ptr, std::vector<void*> args) { (*((TestScript*)ptr).*(&TestScript::__TEST))(*(TestStruct*)args[0]); return nullptr; } }},
 		{"GetStringPtr",{"GetStringPtr","std::string*",static_cast<refl::store::uproperty_type>(2),{},[](void* ptr, std::vector<void*> args) {std::string* v = (*((TestScript*)ptr).*(&TestScript::GetStringPtr))(); return (void*)v; } }}}});
 	}
 	inline static void Unload(::refl::store::storage* storage) {
