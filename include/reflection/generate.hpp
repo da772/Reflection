@@ -324,8 +324,10 @@ namespace refl {
 					if (cC == ' ' || cC == '\t' || cC == '\n' && spacePos == 0) {
 						std::string varName = in.substr(uProp, nextSpace-uProp);
 						if (varName == "const") {
-							*pos = nextSpace-14;
-							return get_constructor(in, clss, pos, err, _static);
+							spacePos = 0;
+							cC = in[++nextSpace];
+							uProp = nextSpace;
+							continue;
 						}
 						v.push_back( {::refl::store::GetTypeInt(varName), varName });
 						size_t commaPos = in.find(",", nextSpace);
