@@ -281,7 +281,7 @@ namespace refl {
 				size_t newL = in.find(";", uProp);
 				if (typeName.size() <= 0)
 					typeName = in.substr(uProp, nextSpace-uProp);
-				if (typeName == "inline" || typeName == "virtual") {
+				if (typeName == "inline" || typeName == "virtual" || typeName == "static") {
 					*pos = nextSpace-14;
 					return get_constructor(in, clss, pos, err);
 				}
@@ -345,7 +345,7 @@ namespace refl {
 				}
 				size_t newL = in.find(";", uProp);
 				std::string typeName = in.substr(uProp, nextSpace-uProp);
-				if (typeName == "inline" || typeName == "virtual") {
+				if (typeName == "inline" || typeName == "virtual" || typename == "static") {
 					*pos = nextSpace-11;
 					return get_next_method(in, clss, pos, err);
 				}
