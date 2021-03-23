@@ -24,6 +24,7 @@ namespace refl {
 
 	class uClass {
 		public:
+		uClass(uClass&& other);
 		uClass(void* p, const std::string& n, ::refl::reflector* r, bool destroy = false);
 		~uClass();
 
@@ -134,6 +135,10 @@ namespace refl {
 				return;
 			}
 			inline void* data() const {return ptr;}
+			inline uClass& operator=(uClass&& other) {
+				other.destroy = false;
+				return *this;
+			}
 		private:
 			std::string clazz = "NULL";
 			void* ptr = nullptr;
@@ -148,8 +153,8 @@ namespace refl {
 		public:
 			inline reflector() : err(), gen(&err), st(&err) {}
 			inline ~reflector() { }
-			inline void Generate(const char* in){ return gen.generate(in);}
-			inline void Clear(){ return gen.clear();}
+			inline void Generate(const char* in){ gen.generate(in);}
+			inline void Clear(){ gen.clear();}
 			inline void SetErrorCallback(void(*f)(const char*)) { err.setErrorCallback(f); }			
 			inline bool HasError() const { return err.HasError(); }
 			inline const char* GetError()  { return err.GetError();}
@@ -207,5 +212,11 @@ namespace refl {
 	inline uClass::uClass(void* p, const std::string& n, ::refl::reflector* r, bool d) : clazz(n), ptr(p), ref(r), store(r->GetStorage()), destroy(d) {
 
 	};
+
+	inline uClass::uClass(uClass&& other) : clazz(other.clazz), ptr(other.ptr), ref(other.ref), store(other.ref->GetStorage()), destroy(other.destroy) {
+		other.destroy = false;
+	}
+
+
 
 }

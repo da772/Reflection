@@ -7,7 +7,6 @@
 #include "error.hpp"
 #include "storage.hpp"
 
-
 namespace refl {
 	namespace gen {
 		namespace impl {
@@ -138,7 +137,6 @@ namespace refl {
 				std::string s = "";
 				for (uint32_t i = 0; i < f.args_val.size(); i++) {
 					std::pair<uint32_t, std::string> p = f.args_val[i];
-					std::cout << f.name << " - " << p.second << std::endl;
 					::refl::store::uproperty_type _type = static_cast<::refl::store::uproperty_type>(f.ret_val);
 					if (_type == ::refl::store::uproperty_type::_ptr || _type == ::refl::store::uproperty_type::uclass_ptr) {
 						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
@@ -147,7 +145,6 @@ namespace refl {
 						type.erase(type.size()-1);
 						s += "("+type+"&)(*("+type+"*)args["+std::to_string(i)+"])";
 					} else {
-						
 						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
 					}
 					if (i < f.args_val.size()-1)
