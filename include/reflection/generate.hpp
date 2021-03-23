@@ -78,32 +78,39 @@ namespace refl {
 					if (pos != std::string::npos) s+= ",\n";
 					while (pos != std::string::npos) {
 						impl::ufunction f = impl::get_next_method(in, cls, &pos, err, false);
+						const ::refl::store::uproperty_type ret_ptype = static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val));
 						s+= "\t\t{\""+f.name+"\",{\""+f.name+"\",\""+f.ret_name+"\",static_cast<refl::store::uproperty_type>("
 						+std::to_string(static_cast<uint32_t>(f.ret_val))+"),{";
 						for (const std::pair<uint32_t, std::string>& p : f.args_val) {
 							s+= "{static_cast<::refl::store::uproperty_type>("+std::to_string(p.first)+"),\""+p.second+"\"},";
 						}
+						
 						if (f.args_val.size() > 0)
 							s[s.size()-1] = ' ';
 						s+= "},[](void* ptr, std::vector<void*> args) {";
-						if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::_void) {
+						if (ret_ptype == ::refl::store::uproperty_type::_void) {
 							if (!f._static) s+= " (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
 							else s+= cls+"::"+f.name+"(";
 							s += impl::set_method_args(f);
 							s +="); return nullptr; } }}";
-						} else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::uclass_ptr) {
+						} else if (ret_ptype == ::refl::store::uproperty_type::uclass_ptr) {
 							if (!f._static) s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
 							else s+= f.ret_name +" v = " + cls+"::"+f.name+"(";
 							s+= impl::set_method_args(f);
 							s+="); return (void*)v; } }}";
-						} else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::constructor) {
+						} else if (ret_ptype == ::refl::store::uproperty_type::constructor) {
 							s+= "return (void*)new "+f.ret_name+"(";
 							s+= impl::set_method_args(f);
 							s +=");} }},\n";
 							s+= "\t\t{\"~constructor\",{\"~constructor\",\"void\",static_cast<refl::store::uproperty_type>("+std::to_string(static_cast<uint32_t>(store::GetTypeInt("void")))+"),{},";
 							s+= "[](void* ptr, std::vector<void*> args) {"+cls+"* p = ("+cls+"*)ptr; delete p; return nullptr;} }}";
+						} else if (ret_ptype == ::refl::store::uproperty_type::_ptr) {
+							if (!f._static) s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							else s+= f.ret_name +" v = " + cls+"::"+f.name+"(";
+							s+= impl::set_method_args(f);
+							s+="); return v; } }}";
 						}
-						else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::uclass_ref) {
+						else if (ret_ptype == ::refl::store::uproperty_type::uclass_ref) {
 							if (!f._static) s+= "void* v = &(*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
 							else s+= "void* v = &"+ cls+"::"+f.name+"(";
 							s+= impl::set_method_args(f);
@@ -292,7 +299,7 @@ namespace refl {
 					return get_constructor(in, clss, pos, err, _static);
 				}
 				uProp = nextSpace;
-				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' || cC == "&") {
+				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' || cC == '&') {
 					if (cC == '*') {
 						typeName += "*";
 					}

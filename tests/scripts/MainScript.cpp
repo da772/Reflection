@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <assert.h>
 
 #include "TestScript.h"
 
@@ -44,22 +45,34 @@ void MainScript::Benchmark() {
 		{
 			uint64_t time = GetTimeNS();
 			refl::uClass uClss = reflect->CreateUClass("TestScript");
-			int getNum = uClss.CallFunction<int>("GetNumber", 823, false); 
+			int getNum = uClss.CallFunction<int>("GetNumber", 823, false);
+			assert(getNum == -823);
 			int* getInt2 = uClss.CallFunction<int*>("GetInt2");
+			assert(*getInt2 == -20);
 			std::vector<int> vec = uClss.GetMember<std::vector<int>>("vec");
+			assert(vec == std::vector<int>({1}) );
 			const int& __iptr = uClss.GetMember<int>("int2");
+			assert(__iptr == -20);
 			*getInt2 = 55;
+			assert(__iptr == 55);
 			std::string getString = uClss.CallFunction<std::string>("GetString");
+			assert(getString == "MyString");
 			std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+			assert(*getStringPtr == "Hello World!");
 			*getStringPtr = "NEW STRING";
 			getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+			assert(*getStringPtr == "NEW STRING");
 			refl::uClass exampleScript = uClss.CallFunction<refl::uClass>("GetExampleScript");
 			std::string n = exampleScript.GetMember<std::string>("name");
+			assert(n == "My Script");
 			uint32_t id = exampleScript.GetMember<uint32_t>("id");
+			assert(id == 42069);
 			uClss.CallFunction<void>("Begin");
 			void* v = uClss.CallFunction<void*>("GetVoidPtr");
+			assert((*(bool*)v) == false);
 			int iRefCheck = 0;
 			int& iRef = uClss.CallFunction<int&>("GetIntRef", iRefCheck);
+			assert(iRefCheck == 10);
 			iRef = 18832;
 			time = GetTimeNS() - time;
 			ns += time;
