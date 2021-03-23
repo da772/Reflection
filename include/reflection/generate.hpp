@@ -15,13 +15,14 @@ namespace refl {
 				uint32_t ret_val;
 				std::string ret_name;
 				std::vector<std::pair<uint32_t, std::string>> args_val;
+				bool _static;
 			};
 			static std::string get_class(const std::string& s, size_t*, ::refl::err::err_hndl* err);
 			static std::pair<std::string, std::string> get_next_member(const std::string& s, size_t* pos);
-			static ufunction get_next_method(const std::string& s, const std::string& clss, size_t* pos,::refl::err::err_hndl* err);
+			static ufunction get_next_method(const std::string& s, const std::string& clss, size_t* pos,::refl::err::err_hndl* err, bool _static);
 			static void reload_generation_map(const std::string& outputDir, const std::vector<std::string>& map);
 			static std::string set_method_args(const impl::ufunction& f);
-			static ufunction get_constructor(const std::string& s, const std::string& clss, size_t* pos, ::refl::err::err_hndl* err);
+			static ufunction get_constructor(const std::string& s, const std::string& clss, size_t* pos, ::refl::err::err_hndl* err, bool _static);
 		}
 		class generator {
 			public:
@@ -58,7 +59,7 @@ namespace refl {
 					s+="}, {\n";
 					pos = in.find("UCONSTRUCTOR()");
 					while (pos != std::string::npos) {
-						impl::ufunction f = impl::get_constructor(in, cls, &pos, err);
+						impl::ufunction f = impl::get_constructor(in, cls, &pos, err, false);
 						s+= "\t\t{\""+cls+"\",{\""+cls+"\",\""+f.ret_name+"\",static_cast<refl::store::uproperty_type>("
 						+std::to_string(static_cast<uint32_t>(f.ret_val))+"),{";
 						for (const std::pair<uint32_t, std::string>& p : f.args_val) {
@@ -76,7 +77,7 @@ namespace refl {
 					pos = in.find("UFUNCTION()");
 					if (pos != std::string::npos) s+= ",\n";
 					while (pos != std::string::npos) {
-						impl::ufunction f = impl::get_next_method(in, cls, &pos, err);
+						impl::ufunction f = impl::get_next_method(in, cls, &pos, err, false);
 						s+= "\t\t{\""+f.name+"\",{\""+f.name+"\",\""+f.ret_name+"\",static_cast<refl::store::uproperty_type>("
 						+std::to_string(static_cast<uint32_t>(f.ret_val))+"),{";
 						for (const std::pair<uint32_t, std::string>& p : f.args_val) {
@@ -86,11 +87,13 @@ namespace refl {
 							s[s.size()-1] = ' ';
 						s+= "},[](void* ptr, std::vector<void*> args) {";
 						if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::_void) {
-							s+= " (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							if (!f._static) s+= " (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							else s+= cls+"::"+f.name+"(";
 							s += impl::set_method_args(f);
 							s +="); return nullptr; } }}";
 						} else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::uclass_ptr) {
-							s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							if (!f._static) s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							else s+= f.ret_name +" v = " + cls+"::"+f.name+"(";
 							s+= impl::set_method_args(f);
 							s+="); return (void*)v; } }}";
 						} else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::constructor) {
@@ -101,12 +104,14 @@ namespace refl {
 							s+= "[](void* ptr, std::vector<void*> args) {"+cls+"* p = ("+cls+"*)ptr; delete p; return nullptr;} }}";
 						}
 						else if (static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val)) == ::refl::store::uproperty_type::uclass_ref) {
-							s+= "void* v = &(*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							if (!f._static) s+= "void* v = &(*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							else s+= "void* v = &"+ cls+"::"+f.name+"(";
 							s+= impl::set_method_args(f);
 							s+="); return (void*)v; } }}";
 						}
 						else {
-							s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							if (!f._static) s+= f.ret_name +" v = (*(("+cls+"*)ptr).*(&"+cls+"::"+f.name+"))(";
+							else s+= f.ret_name +" v = "+ cls+"::"+f.name+"(";
 							s+= impl::set_method_args(f);
 							s+="); "+f.ret_name+"* _ptr = new "+f.ret_name+"(v); return (void*)_ptr; } }}";
 						}
@@ -137,7 +142,7 @@ namespace refl {
 				std::string s = "";
 				for (uint32_t i = 0; i < f.args_val.size(); i++) {
 					std::pair<uint32_t, std::string> p = f.args_val[i];
-					::refl::store::uproperty_type _type = static_cast<::refl::store::uproperty_type>(f.ret_val);
+					::refl::store::uproperty_type _type = static_cast<::refl::store::uproperty_type>(p.first);
 					if (_type == ::refl::store::uproperty_type::_ptr || _type == ::refl::store::uproperty_type::uclass_ptr) {
 						s += "*("+p.second+"*)args["+std::to_string(i)+"]";
 					} else if (_type == ::refl::store::uproperty_type::uclass_ref){
@@ -254,7 +259,7 @@ namespace refl {
 				return {typeName, memName };
 			}
 
-			static ufunction get_constructor(const std::string& in, const std::string& clss, size_t* pos, ::refl::err::err_hndl* err) {
+			static ufunction get_constructor(const std::string& in, const std::string& clss, size_t* pos, ::refl::err::err_hndl* err, bool _static) {
 				size_t uProp = *pos+14;
 				if (uProp == std::string::npos) {
 					err->setErrorStr("Refl::Error: Failed to find UCONSTRUCTOR");
@@ -281,12 +286,13 @@ namespace refl {
 				size_t newL = in.find(";", uProp);
 				if (typeName.size() <= 0)
 					typeName = in.substr(uProp, nextSpace-uProp);
-				if (typeName == "inline" || typeName == "virtual" || typeName == "static") {
+				if (typeName == "inline" || typeName == "virtual" || typeName == "static" || typeName == "const") {
 					*pos = nextSpace-14;
-					return get_constructor(in, clss, pos, err);
+					if (typeName == "static") _static = true;
+					return get_constructor(in, clss, pos, err, _static);
 				}
 				uProp = nextSpace;
-				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' ) {
+				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' || cC == "&") {
 					if (cC == '*') {
 						typeName += "*";
 					}
@@ -317,6 +323,10 @@ namespace refl {
 					}
 					if (cC == ' ' || cC == '\t' || cC == '\n' && spacePos == 0) {
 						std::string varName = in.substr(uProp, nextSpace-uProp);
+						if (varName == "const") {
+							*pos = nextSpace-14;
+							return get_constructor(in, clss, pos, err, _static);
+						}
 						v.push_back( {::refl::store::GetTypeInt(varName), varName });
 						size_t commaPos = in.find(",", nextSpace);
 						size_t parPos = in.find(")", nextSpace);
@@ -330,10 +340,10 @@ namespace refl {
 				}
 
 				*pos = in.find("UCONSTRUCTOR()", newL);
-				return {clss, ::refl::store::GetTypeInt(typeName), typeName, v};
+				return {clss, ::refl::store::GetTypeInt(typeName), typeName, v, _static};
 			}
 
-			static ufunction get_next_method(const std::string& in, const std::string& clss, size_t* pos, ::refl::err::err_hndl* err) {
+			static ufunction get_next_method(const std::string& in, const std::string& clss, size_t* pos, ::refl::err::err_hndl* err, bool _static) {
 			    size_t uProp = (*pos)+11;
 				char cC = in[uProp];
 				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=') {
@@ -345,9 +355,10 @@ namespace refl {
 				}
 				size_t newL = in.find(";", uProp);
 				std::string typeName = in.substr(uProp, nextSpace-uProp);
-				if (typeName == "inline" || typeName == "virtual" || typename == "static") {
+				if (typeName == "inline" || typeName == "virtual" || typeName == "static" || typeName == "const") {
 					*pos = nextSpace-11;
-					return get_next_method(in, clss, pos, err);
+					if (typeName == "static") _static = true;
+					return get_next_method(in, clss, pos, err, _static);
 				}
 				uProp = nextSpace;
 				while (cC == ' ' || cC == '\n' || cC == '\t' || cC == '=' || cC == '*' || cC == '&' ) {
@@ -381,6 +392,12 @@ namespace refl {
 					}
 					if (cC == ' ' || cC == '\t' || cC == '\n' && spacePos == 0) {
 						std::string varName = in.substr(uProp, nextSpace-uProp);
+						if (varName == "const") {
+							spacePos = 0;
+							cC = in[++nextSpace];
+							uProp = nextSpace;
+							continue;
+						}
 						v.push_back( {::refl::store::GetTypeInt(varName), varName });
 						size_t commaPos = in.find(",", nextSpace);
 						size_t parPos = in.find(")", nextSpace);
@@ -395,7 +412,7 @@ namespace refl {
 
 				*pos = in.find("UFUNCTION()", newL);
 
-				return {memName, ::refl::store::GetTypeInt(typeName), typeName, v};
+				return {memName, ::refl::store::GetTypeInt(typeName), typeName, v, _static};
 			}
 		}
 

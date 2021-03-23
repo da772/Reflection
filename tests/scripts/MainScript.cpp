@@ -13,6 +13,16 @@ void MainScript::Benchmark() {
 	const std::unordered_map<std::string, refl::store::uobject_struct>& map = storage->get_map();
 	std::cout << "PRINTING MAP : " << map.size() << std::endl;
 
+	try {
+	std::string myStr = "YES";
+
+	std::string r = reflect->CallStaticFunction<const std::string&>("TestScript", "StaticFunc",55, myStr);
+
+	std::cout << "STATIC FUNC: " << r << std::endl;
+	} catch (std::exception& e) {
+		std::cout << "EXCEPTION: " << e.what() << std::endl;
+	}
+
 	for (const std::pair<std::string, refl::store::uobject_struct>& p : map) {
 		std::string s = p.first;
 		for (const std::pair<std::string, refl::store::uproperty_struct>& _p : p.second.property_map) {
@@ -53,7 +63,7 @@ void MainScript::Benchmark() {
 			iRef = 18832;
 			time = GetTimeNS() - time;
 			ns += time;
-			uClss.CallFunction<void>("Error!!"); // Catch this error
+			//uClss.CallFunction<void>("Error!!"); // Catch this error
 
 		} 
 		catch (std::exception& e) 

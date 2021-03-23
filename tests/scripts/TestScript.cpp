@@ -3,6 +3,7 @@
 
 #include <math.h>
 
+
 int TestScript::GetNumber(int i, bool b) { 
     if (b) return i; 
     else return -i;       

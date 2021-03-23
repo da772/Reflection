@@ -110,6 +110,10 @@ class TestScript : public NativeScript {
         return TestScript();
     }
 */
+
+    UFUNCTION()
+    static inline std::string& StaticFunc(int i, std::string& s) {std::cout << "STATIC FUNC " << s << std::endl; s = "POOP"; return s;}
+
     UPROPERTY()
     std::string myString = "Hello World!";
 
