@@ -26,6 +26,7 @@ int main() {
 	refl::reflector reflect = refl::reflector();
 	reflect.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
 	reflect.SetOutputDir((files::GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
+	reflect.SetRelativeInclude("../");
 	bool init = ReloadLib(&lib, reflect, scriptFiles);
 	while (!init) {
 		char s = 0;

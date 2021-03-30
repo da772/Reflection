@@ -13,6 +13,20 @@ struct TestStruct {
 };
 
 UCLASS()
+class ClassTwo {
+    public:
+    UCONSTRUCTOR()
+    inline ClassTwo() {};
+    inline ~ClassTwo() {};
+
+    UFUNCTION()
+    inline void TestFunc() {};
+
+    UPROPERTY()
+    int testProperty = 5;
+};
+
+UCLASS()
 class TestScript : public NativeScript {
     UCLASS_BODY()
     public:
@@ -121,5 +135,21 @@ class TestScript : public NativeScript {
     inline std::string* GetStringPtr() {
         return &myString;
     }
+
+};
+
+
+UCLASS()
+class AnothaClass {
+    public:
+    UCONSTRUCTOR()
+    inline AnothaClass() {}
+    inline ~AnothaClass() {}
+
+    UFUNCTION()
+    inline int AnotheFunction() {return 0;}
+
+    UPROPERTY()
+    std::vector<int> myArr;
 
 };

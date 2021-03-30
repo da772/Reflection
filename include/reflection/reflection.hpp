@@ -168,6 +168,7 @@ namespace refl {
 			inline const char* GetError()  { return err.GetError();}
 			inline store::storage* GetStorage() { return &st; }
 			inline void SetOutputDir(const char* outputDir) { gen.set_output(outputDir); }
+			inline void SetRelativeInclude(const char* includeDir) {gen.set_relative_include(includeDir);}
 			//void LoadGeneratedFiles() { ::refl::impl::__loadGeneratedFiles(&st); }
 			//void UnloadGeneratedFiles() { ::refl::impl::__unloadGeneratedFiles(&st); }
 		private:

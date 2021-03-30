@@ -29,24 +29,46 @@ namespace refl {
 				inline generator(::refl::err::err_hndl* error) : err(error) {}
 				inline void clear() { clss.clear(); }
 				inline void generate(const char* in) {
+					std::string fileN(in);
+					size_t p = fileN.find_last_of("/");
+					fileN = fileN.substr(p+1, fileN.size());
 					std::ifstream t(in);
 					std::stringstream buffer;
 					buffer << t.rdbuf();
 					t.close();
-					std::pair<std::string, std::string> p = generateM(buffer.str().c_str());
-					std::ofstream out(outputDir+p.first+std::string(".generated.h"));
-    				out << p.second;
-    				out.close();
-					clss.push_back(p.first);
+					std::vector<std::pair<std::string, std::string>> _p = generateM(buffer.str().c_str(), fileN.c_str());
+					for (std::pair<std::string, std::string>& p : _p) {
+						std::ofstream out(outputDir+p.first+std::string(".generated.h"));
+						out << p.second;
+						out.close();
+						clss.push_back(p.first);
+					}
 					impl::reload_generation_map(outputDir, clss);	
 				}
 
-				inline std::pair<std::string, std::string> generateM(const char* _in) {
-					std::string in(_in);
+				inline std::vector<std::pair<std::string, std::string>> generateM(const char* _in, const char* fileN) {
+					std::vector<std::pair<std::string, std::string>> ret;
+					std::string m_in(_in);
 					size_t pos = 0;
-					std::string s = "#pragma once\n#include \"reflection/reflection.hpp\"\n#include \"../";
-					std::string cls = impl::get_class(in, &pos, err);
-					s+= cls+".h\"\nclass " + cls + "_Generated : public refl::class_generation {\n ";
+					
+					bool next = true;
+					size_t lstClssPos=  0;
+					while (next) {
+					std::string s = "#pragma once\n#include \"reflection/reflection.hpp\"\n#include \""+relativeInclude;
+					std::string cls = impl::get_class(m_in, &lstClssPos, err);
+					pos = lstClssPos;
+					if (cls.size() <= 0)
+						break;
+					size_t _pos = pos;
+					size_t nextCls = impl::get_class(m_in, &_pos, err).size();
+					std::string in;
+					if (nextCls <= 0) {
+						in = m_in.substr(pos, m_in.size()-pos);
+						next = false;
+					} else {
+						in = m_in.substr(pos, _pos-pos);
+					}
+					s+= std::string(fileN)+"\"\nclass " + cls + "_Generated : public refl::class_generation {\n ";
 					s+= "\tpublic:\n\tinline static void Load(::refl::store::storage* storage) {\n";
 					s+= "\t\tstorage->store(\""+cls+"\",{\""+cls+"\",{\n";
 					pos = in.find("UPROPERTY()");
@@ -57,6 +79,7 @@ namespace refl {
 						if (pos != std::string::npos) s+= ",\n";
 					}
 					s+="}, {\n";
+					
 					pos = in.find("UCONSTRUCTOR()");
 					while (pos != std::string::npos) {
 						impl::ufunction f = impl::get_constructor(in, cls, &pos, err, false);
@@ -129,18 +152,24 @@ namespace refl {
 					s += "\t}\n\tinline static void Unload(::refl::store::storage* storage) {\n";
 					s += "\t\tstorage->discard(\""+cls+"\");\n\t}\n";
 					s += "};\n";
-
-					return {cls, s};
+					ret.push_back({cls,s});
+					}
+					return ret;
 				}
 
 				inline void set_output(const char* c) {
 					outputDir = std::string(c);
 				}
 
+				inline void set_relative_include(const char* c) {
+					relativeInclude = std::string(c);
+				}
+
 			private:
 				::refl::err::err_hndl* err;
 				std::string outputDir;
 				std::vector<std::string> clss;
+				std::string relativeInclude = "";
 		};
 
 		namespace impl {
@@ -197,17 +226,17 @@ namespace refl {
 				out.close();
 			}
 			static std::string get_class(const std::string& in, size_t* pos, ::refl::err::err_hndl* err) {
-					size_t uclassPos = in.find("UCLASS()");
+					size_t uclassPos = in.find("UCLASS()", *pos);
 
 					if (uclassPos == std::string::npos) {
-						err->setErrorStr("Error 0: UCLASS not found");
+						//err->setErrorStr("Error 0: UCLASS not found");
 						return "";
 					}
 
 					size_t classPos = in.find("class ", uclassPos+7);
 
 					if (classPos == std::string::npos) {
-						err->setErrorStr("Error 1: class not found");
+						//err->setErrorStr("Error 1: class not found");
 						return "";
 					}
 
@@ -328,7 +357,7 @@ namespace refl {
 						spacePos = 0;
 						uProp = nextSpace;
 					}
-					if (cC == ' ' || cC == '\t' || cC == '\n' && spacePos == 0) {
+					if ( (cC == ' ' || cC == '\t' || cC == '\n') && spacePos == 0) {
 						std::string varName = in.substr(uProp, nextSpace-uProp);
 						if (varName == "const") {
 							spacePos = 0;
@@ -399,7 +428,7 @@ namespace refl {
 						spacePos = 0;
 						uProp = nextSpace;
 					}
-					if (cC == ' ' || cC == '\t' || cC == '\n' && spacePos == 0) {
+					if ( (cC == ' ' || cC == '\t' || cC == '\n') && spacePos == 0) {
 						std::string varName = in.substr(uProp, nextSpace-uProp);
 						if (varName == "const") {
 							spacePos = 0;
