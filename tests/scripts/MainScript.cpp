@@ -16,7 +16,6 @@ void MainScript::Benchmark() {
 
 	try {
 	std::string myStr = "YES";
-
 	std::string r = reflect->CallStaticFunction<const std::string&>("TestScript", "StaticFunc",55, myStr);
 
 	std::cout << "STATIC FUNC: " << r << std::endl;
@@ -36,105 +35,50 @@ void MainScript::Benchmark() {
 		std::cout << s << std::endl;
 	}
 	std::cout << "MAP PRINTED" << std::endl;
-	uint64_t ns = 0;
-	uint64_t n = 0;
-	uint32_t amt = 1;
-	for (uint32_t i = 0 ; i < amt; i++)
-	{
-		try 
-		{
-			uint64_t time = GetTimeNS();
-			refl::uClass uClss = reflect->CreateUClass("TestScript");
-			int getNum = uClss.CallFunction<int>("GetNumber", 823, false);
-			assert(getNum == -823);
-			int* getInt2 = uClss.CallFunction<int*>("GetInt2");
-			assert(*getInt2 == -20);
-			std::vector<int> vec = uClss.GetMember<std::vector<int>>("vec");
-			assert(vec == std::vector<int>({1}) );
-			const int& __iptr = uClss.GetMember<int>("int2");
-			assert(__iptr == -20);
-			*getInt2 = 55;
-			assert(__iptr == 55);
-			std::string getString = uClss.CallFunction<std::string>("GetString");
-			assert(getString == "MyString");
-			std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-			assert(*getStringPtr == "Hello World!");
-			*getStringPtr = "NEW STRING";
-			getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
-			assert(*getStringPtr == "NEW STRING");
-			refl::uClass exampleScript = uClss.CallFunction<refl::uClass>("GetExampleScript");
-			std::string n = exampleScript.GetMember<std::string>("name");
-			assert(n == "My Script");
-			uint32_t id = exampleScript.GetMember<uint32_t>("id");
-			assert(id == 42069);
-			uClss.CallFunction<void>("Begin");
-			void* v = uClss.CallFunction<void*>("GetVoidPtr");
-			assert((*(bool*)v) == false);
-			int iRefCheck = 0;
-			int& iRef = uClss.CallFunction<int&>("GetIntRef", iRefCheck);
-			assert(iRefCheck == 10);
-			iRef = 18832;
-			time = GetTimeNS() - time;
-			ns += time;
-			//uClss.CallFunction<void>("Error!!"); // Catch this error
 
-		} 
-		catch (std::exception& e) 
-		{
-			std::cout << "REFLECTION ERROR: " <<  e.what() << std::endl;
-		}
 
-		try 
-		{
-			uint64_t time = GetTimeNS();
-			TestScript* testScript = new TestScript();
-			int getNum = testScript->GetNumber(832, false);
-			int* getInt2 = testScript->GetInt2();
-			std::vector<int> vec = testScript->vec;
-			const int& _iptr = testScript->int2;
-			*getInt2 = 55;
-			std::string getString = testScript->GetString();
-			std::string* getStringPtr = testScript->GetStringPtr();
-			*getStringPtr = "NEW STRING";
-			getStringPtr = testScript->GetStringPtr();
-			ExampleScript* exampleScript = testScript->GetExampleScript();
-			std::string _n = exampleScript->name;
-			uint32_t id = exampleScript->id;
-			testScript->Begin();
-			void* v = testScript->GetVoidPtr();
-			int iRefCheck = 0;
-			int& iRef = testScript->GetIntRef(iRefCheck);
-			iRef = 18832;
-			delete testScript;
-			time = GetTimeNS() - time;
-			n += time;
-			// delete exampleScript; Cant catch delete errors
-		} catch (std::exception& e) {
-			std::cout << "NASDATIVE ERROR: " << e.what() << std::endl;
-		}
-	}
-
+	std::cout << "\nRunning Test 1... " << std::endl;
+	try 
 	{
 		uint64_t time = GetTimeNS();
 		refl::uClass uClss = reflect->CreateUClass("TestScript");
-		uClss.CallFunction<void>("Benchmark");
-		time = GetTimeNS() - time;
-		ns += time;
-	}
-
+		int getNum = uClss.CallFunction<int>("GetNumber", 823, false);
+		assert(getNum == -823);
+		int* getInt2 = uClss.CallFunction<int*>("GetInt2");
+		assert(*getInt2 == -20);
+		std::vector<int> vec = uClss.GetMember<std::vector<int>>("vec");
+		assert(vec == std::vector<int>({1}) );
+		const int& __iptr = uClss.GetMember<int>("int2");
+		assert(__iptr == -20);
+		*getInt2 = 55;
+		assert(__iptr == 55);
+		std::string getString = uClss.CallFunction<std::string>("GetString");
+		assert(getString == "MyString");
+		std::string* getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+		assert(*getStringPtr == "Hello World!");
+		*getStringPtr = "NEW STRING";
+		getStringPtr = uClss.CallFunction<std::string*>("GetStringPtr");
+		assert(*getStringPtr == "NEW STRING");
+		refl::uClass exampleScript = uClss.CallFunction<refl::uClass>("GetExampleScript");
+		std::string n = exampleScript.GetMember<std::string>("name");
+		assert(n == "My Script");
+		uint32_t id = exampleScript.GetMember<uint32_t>("id");
+		assert(id == 42069);
+		uClss.CallFunction<void>("Begin");
+		void* v = uClss.CallFunction<void*>("GetVoidPtr");
+		assert((*(bool*)v) == false);
+		int iRefCheck = 0;
+		int& iRef = uClss.CallFunction<int&>("GetIntRef", iRefCheck);
+		assert(iRefCheck == 10);
+		iRef = 18832;
+		assert(18832 ==  uClss.CallFunction<int&>("GetIntRef", iRefCheck));
+		std::cout << "Test 1 Passed" << std::endl;
+	} 
+	catch (std::exception& e) 
 	{
-		uint64_t time = GetTimeNS();
-		TestScript* testScript = new TestScript();
-		testScript->Benchmark();
-		time = GetTimeNS() - time;
-		n += time;
-		delete testScript;
+		std::cout << "REFLECTION ERROR: " <<  e.what() << std::endl;
+		return;
 	}
-    
-	//ns /= amt;
-	//n /= amt;
-	std::cout << "REFLECTION: " << ns << " ns | NATIVE: " << n << " ns" << std::endl;
-	std::cout << (ns < n ? "REFLECTION " : "NATIVE ") << " is " << (ns < n ? n / ns : ns / n) << "x faster" << std::endl;
 
 	//reflect.UnloadGeneratedFiles();
 }
