@@ -13,7 +13,6 @@
     #define __REFLECTION__EXPORT__ extern "C" __attribute__((visibility("default")))
     #define __REFLECTION__IMPORT__ extern "C"
 #else
-    //  do nothing and hope for the best?
     #define __REFLECTION__EXPORT__
     #define __REFLECTION__IMPORT__
 #endif
