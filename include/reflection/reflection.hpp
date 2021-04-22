@@ -53,9 +53,16 @@ namespace refl {
 				return __GetMember<T>(name);
 			}
 
-			template<typename T>
+			template <typename T, typename std::enable_if<!std::is_same<T, uClass>::value>::type* = nullptr>
 			inline typename std::conditional<std::is_pointer<T>::value, T, typename std::remove_reference<T>::type&>::type GetMember(const std::string& name) {
 				return _GetMember<T>(name);
+			}
+
+			template <typename T, typename std::enable_if<std::is_same<T, uClass>::value>::type* = nullptr>
+			inline uClass GetMember(const std::string& name) {
+				const std::unordered_map<std::string, refl::store::uobject_struct>& map = store->get_map();
+				uintptr_t o = map.at(clazz).property_map.at(name).offset;
+				return uClass((void*)((uint8_t*)ptr + o), map.at(clazz).property_map.at(name).type_name, this->ref);
 			}
 
 			template<typename T>
@@ -142,7 +149,10 @@ namespace refl {
 				}
 				return;
 			}
-			inline void* data() const {return ptr;}
+			inline void* data() const { return ptr; }
+			template<typename T>
+			inline T data_as() const { return *(T*)ptr; }
+
 			inline uClass& operator=(uClass&& other) {
 				this->clazz = other.clazz;
 				this->destroy = other.destroy;

@@ -62,17 +62,25 @@ int& ref = myScript.GetMember<int&>("ref");
 // Can also get regular members as ptrs and refs
 int* iPtr = &myScript.GetMember<int>("i");
 int& iRef = myScript.GetMember<int>("i");
+// Can also get member as uClass
+refl::uClass uClazz = myScript.GetMember<uClass>("i");
+int i = uClazz.data_as<int>();
 ```
 
 ### Set Members
 ```cpp
 refl::uClass myScript = reflect.CreateUClass("MyScript", 1, "Hello World", nullptr);
+// can set calling set member
 myScript.SetMember<int>("i", 420);
 myScript.SetMember<char>("c", 'f');
 myScript.SetMember<void*>("ptr", nullptr);
 myScript.SetMember<std::vector<int>>("vec", {1,2,3,4});
 int i = 0;
 myScript.SetMember<int&>("ref", i);
+// or can set using references and get member
+myScript.GetMember<char>("c") = 'j';
+myScript.GetMember<int>("i") = 66;
+
 ```
 
 ### Call functions
