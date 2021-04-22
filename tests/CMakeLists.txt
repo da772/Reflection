@@ -29,14 +29,18 @@ target_include_directories(
 )
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
-if (${HOT_RELOAD} EQUAL 1)
+if (DEFINED HOT_RELOAD)
 message(WARNING "HOT RELOAD")
     add_definitions(-DHOT_RELOAD)
+    if (UNIX)
+    target_link_libraries(${PROJECT_NAME}
+    dl)
+    endif (UNIX)
 else()
 message(WARNING "NO HOT RELOAD")
     target_link_libraries(${PROJECT_NAME}
     Scripts)
-    endif(${HOT_RELOAD} EQUAL 1)
+    endif(DEFINED HOT_RELOAD)
 message(WARNING ${CMAKE_GENERATOR})
 if (${CMAKE_GENERATOR} MATCHES "Ninja")
     add_definitions(-DCOMPILER=ninja)
@@ -52,6 +56,3 @@ elseif (${CMAKE_GENERATOR} MATCHES "Xcode")
 message(Warning "XCODE")
 endif (${CMAKE_GENERATOR} MATCHES "Ninja")
 
-if (UNIX)
-    target_link_libraries(${PROJECT_NAME} dl)
-endif (UNIX)
