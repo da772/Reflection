@@ -25,8 +25,16 @@ add_library(${PROJECT_NAME} SHARED
     "../include"
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${PROJECT_SOURCE_DIR}/bin"
-        "../bin")
 
+get_filename_component(PARENT_DIR ${PROJECT_SOURCE_DIR} DIRECTORY)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        "${PROJECT_SOURCE_DIR}/bin/$<CONFIG>/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+       "${PARENT_DIR}/bin/$<CONFIG>/$<TARGET_FILE_NAME:${PROJECT_NAME}>")
+if (WIN32)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+COMMAND ${CMAKE_COMMAND} -E copy
+        "${PROJECT_SOURCE_DIR}/bin/$<CONFIG>/${PROJECT_NAME}.pdb"
+       "${PARENT_DIR}/bin/$<CONFIG>/${PROJECT_NAME}.pdb")
+endif (WIN32)

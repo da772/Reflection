@@ -37,18 +37,18 @@ int main() {
 	}
 	
 	while (true) {	
-		int* code;
+		int code;
 		{
 			refl::uClass mainScript = reflect.CreateUClass("MainScript");
 			mainScript.SetMember<refl::reflector*>("reflect", &reflect);
-			code = &mainScript.GetMember<int>("exitCode");
 			mainScript.SetMember<std::vector<std::string>*>("scriptFiles", &scriptFiles);
 			mainScript.CallFunction<void>("Run");
+			code = mainScript.GetMember<int>("exitCode");
 		}
-		if (*code == 0) {
+		if (code == 0) {
 			break;
-		} else if (*code == 1) {
-			*code = 0;
+		} else if (code == 1) {
+			code = 0;
 			bool reload = ReloadLib(&lib, reflect, scriptFiles);
 			while (!reload) {
 				char s = 0;
@@ -79,7 +79,7 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 		std::cout << "Build Complete...\n" << std::endl;
 		std::string pathDir = files::GetParentExecuteableDir(1);
 		#ifdef _WIN32
-			pathDir = files::GetParentExecuteableDir(2)+"/scripts/"
+		pathDir = files::GetParentExecuteableDir(2) + "scripts/";
 		#endif
 		std::string compileOut = sys::compile_proj(pathDir, "Scripts", "make");
 		if (compileOut.size() > 0) {

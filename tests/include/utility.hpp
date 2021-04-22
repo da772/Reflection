@@ -156,21 +156,16 @@ namespace sys {
 #if defined (__linux__) || defined (__APPLE__)
 		cmd += "cd " + dir + " && "+MS_xstr(COMPILER)+" "+file + " ";
 #endif
-		const std::string config = BUILD_CONFIG;
-		if (config == "Release") {
+		const std::string config = CMAKE_INTDIR;
+		if (config.size() > 0) {
 #if defined (__linux__) || defined (__APPLE__)
-			cmd += "config=release";
+			std::transform(config.begin(), config.end(), config.begin(),
+				[](unsigned char c) { return std::tolower(c); });
+			cmd += "config=" + config;
 #endif
+
 #ifdef _WIN32
-			cmd += "/p:Configuration=Release ";
-#endif
-		}
-		else if (config == "Debug") {
-#if defined (__linux__) || defined (__APPLE__)
-			cmd += "config=debug";
-#endif
-#ifdef _WIN32
-			cmd += "/p:Configuration=Debug ";
+			cmd += "/p:Configuration=" + config + " ";
 #endif
 		}
 
@@ -418,7 +413,7 @@ inline void __LoadLib(dllptr* lib, refl::reflector& r, const std::string& name) 
 		dst.close();
 	}
 #ifdef _WIN32
-	//dll::movePDB(files::GetParentExecuteableDir(0), "Reflection_Tests_Scripts", "_", true);
+	dll::movePDB(files::GetParentExecuteableDir(0), "Scripts", "_", true);
 #endif
 	*lib = dll::dlopen(loc.c_str(), 0);
 
