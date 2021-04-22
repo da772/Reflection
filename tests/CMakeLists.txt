@@ -33,9 +33,12 @@ if (DEFINED HOT_RELOAD)
 message(WARNING "HOT RELOAD")
     add_definitions(-DHOT_RELOAD)
     if (UNIX)
-    target_link_libraries(${PROJECT_NAME}
-    dl)
+        target_link_libraries(${PROJECT_NAME}
+        dl)
     endif (UNIX)
+    if (WIN32)
+        add_definitions(-DMS_BUILD_BIN=\"$(MSBuildBinPath)\")    
+    endif (WIN32)
 else()
 message(WARNING "NO HOT RELOAD")
     target_link_libraries(${PROJECT_NAME}

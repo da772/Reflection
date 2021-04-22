@@ -345,9 +345,7 @@ namespace files {
 #pragma warning(disable : 4996)
 		TCHAR NPath[1024];
 		GetModuleFileName(NULL, NPath, 1024);
-		std::wstring w_arr(NPath);
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-		std::string path = converter.to_bytes(w_arr);
+		std::string path(NPath);
 		std::replace(path.begin(), path.end(), '\\', '/');
 		return path;
 #pragma warning(pop)

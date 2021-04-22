@@ -29,3 +29,6 @@ _deps
 .ninja_deps
 .ninja_log
 *.ninja
+*.dir
+x64/
+lib/

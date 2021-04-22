@@ -77,7 +77,7 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 		//	std::cout << buildOut << std::endl;
 		//}
 		std::cout << "Build Complete...\n" << std::endl;
-		std::string compileOut = sys::compile_proj(files::GetParentExecuteableDir(1), "Scripts", "make");
+		std::string compileOut = sys::compile_proj(files::GetParentExecuteableDir(2)+"/scripts/", "Scripts", "make");
 		if (compileOut.size() > 0) {
 			if (compileOut.find("error") != std::string::npos) {
 				std::cout << compileOut << std::endl;
