@@ -59,6 +59,7 @@ int main() {
 				reload = ReloadLib(&lib, reflect, scriptFiles);
 			}
 		}
+
 	}
 
 	return 0;
@@ -78,7 +79,7 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 		//}
 		std::cout << "Build Complete...\n" << std::endl;
 		std::string pathDir = files::GetParentExecuteableDir(1);
-		#ifdef _WIN32
+		#if defined(_WIN32) && !defined(COMPILER)
 		pathDir = files::GetParentExecuteableDir(2) + "scripts/";
 		#endif
 		std::string compileOut = sys::compile_proj(pathDir, "Scripts", "make");

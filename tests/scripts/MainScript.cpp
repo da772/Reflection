@@ -34,6 +34,7 @@ void MainScript::Benchmark() {
 		}
 		std::cout << s << std::endl;
 	}
+
 	std::cout << "MAP PRINTED" << std::endl;
 
 
@@ -84,6 +85,7 @@ void MainScript::Benchmark() {
 		for (int i =0 ; i < 5; i++) {
 			std::cout << ptrPtr[i] << std::endl;
 		}
+
 		
 		std::cout << "Test 1 Passed" << std::endl;
 	} 

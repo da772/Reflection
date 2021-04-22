@@ -118,6 +118,7 @@ namespace dll {
 #ifndef BUILD_CONFIG
 #define BUILD_CONFIG ""
 #endif
+
 #ifndef BUILD_ARCHITECTURE
 #define BUILD_ARCHITECTURE ""
 #endif
@@ -148,15 +149,19 @@ namespace sys {
 
 	inline std::string compile_proj(const std::string& dir, const std::string& file, const std::string& CXX = "") {
 		::std::string cmd = "";
-#ifdef _WIN32
+#if defined(_WIN32) && defined(COMPILER)
+		cmd += "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat && ";
+#endif
+#if defined(_WIN32) && !defined(COMPILER)
 		std::string _msBin = MS_xstr(MS_BUILD_BIN);
 		_msBin.erase(_msBin.size() - 1);
 		cmd += _msBin + "\\MSBuild.exe\" \"" + dir + file + ".vcxproj\" /verbosity:quiet /nologo ";
 #endif
-#if defined (__linux__) || defined (__APPLE__)
+#if defined (__linux__) || defined (__APPLE__) || defined(COMPILER)
 		cmd += "cd " + dir + " && "+MS_xstr(COMPILER)+" "+file + " ";
 #endif
-		const std::string config = CMAKE_INTDIR;
+			const std::string config = MS_xstr(BUILD_CONFIG);;
+
 		if (config.size() > 0) {
 #if defined (__linux__) || defined (__APPLE__)
 			std::transform(config.begin(), config.end(), config.begin(),
