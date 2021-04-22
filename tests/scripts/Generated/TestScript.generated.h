@@ -15,6 +15,8 @@ class TestScript_Generated : public refl::class_generation {
 		{"vec",{"vec","std::vector<int>",static_cast<refl::store::uproperty_type>(1),refl::store::offsetOf(&TestScript::vec) }},
 		{"bBool",{"bBool","bool",static_cast<refl::store::uproperty_type>(4),refl::store::offsetOf(&TestScript::bBool) }},
 		{"myStruct",{"myStruct","TestStruct",static_cast<refl::store::uproperty_type>(1),refl::store::offsetOf(&TestScript::myStruct) }},
+		{"doublePtr",{"doublePtr","char**",static_cast<refl::store::uproperty_type>(2),refl::store::offsetOf(&TestScript::doublePtr) }},
+		{"classTwo",{"classTwo","ClassTwo",static_cast<refl::store::uproperty_type>(1),refl::store::offsetOf(&TestScript::classTwo) }},
 		{"myString",{"myString","std::string",static_cast<refl::store::uproperty_type>(1),refl::store::offsetOf(&TestScript::myString) }}}, {
 		{"TestScript",{"TestScript","TestScript",static_cast<refl::store::uproperty_type>(1),{},[](void* ptr, std::vector<void*> args) {return (void*)new TestScript();} }},
 		{"~TestScript",{"~TestScript","void",static_cast<refl::store::uproperty_type>(3),{},[](void* ptr, std::vector<void*> args) {TestScript* p = (TestScript*)ptr; delete p; return nullptr;} }},

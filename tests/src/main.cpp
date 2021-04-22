@@ -11,16 +11,15 @@
 #include "utility.hpp"
 #include "reflection/reflection.hpp"
 
-#ifdef TESTS_LINK_TYPE
-	#if (TESTS_LINK_TYPE == 0)
-		#include "Reflection.map.generated.h"
-	#endif
+#ifndef HOT_RELOAD
+	#include "Reflection.map.generated.h"
 #endif
 
 
 static bool ReloadLib(dllptr* lib, refl::reflector& reflect,  const std::vector<std::string>& scriptFiles);
 
 int main() {
+
 	dllptr lib = 0;
 	std::vector<std::string> scriptFiles = {"TestScript.h", "ExampleScript.h", "MainScript.h"};
 	refl::reflector reflect = refl::reflector();
@@ -66,19 +65,19 @@ int main() {
 };
 
 static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<std::string>& scriptFiles) {
-#if (TESTS_LINK_TYPE == 1)
+#ifdef HOT_RELOAD
 		if (*lib) {
 			__UnloadLib(lib, reflect);
 		}
 		reflect.Clear();
 		for (const std::string& s : scriptFiles)
 			__GenerateLib((files::GetParentExecuteableDir(3) + "tests/scripts/"), s, reflect);
-		std::string buildOut = sys::build_proj(files::GetParentExecuteableDir(3), "GenerateMake");
-		if (buildOut.size() > 0) {
-			std::cout << buildOut << std::endl;
-		}
+		//std::string buildOut = sys::build_proj(files::GetParentExecuteableDir(3), "GenerateMake");
+		//if (buildOut.size() > 0) {
+		//	std::cout << buildOut << std::endl;
+		//}
 		std::cout << "Build Complete...\n" << std::endl;
-		std::string compileOut = sys::compile_proj(files::GetParentExecuteableDir(3), "Reflection_Tests_Scripts");
+		std::string compileOut = sys::compile_proj(files::GetParentExecuteableDir(1), "Scripts", "make");
 		if (compileOut.size() > 0) {
 			if (compileOut.find("error") != std::string::npos) {
 				std::cout << compileOut << std::endl;
@@ -89,7 +88,7 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 			}
 		}
 		std::cout << "Compile Complete...\n" << std::endl;
-		__LoadLib(lib,reflect);
+		__LoadLib(lib,reflect, "Scripts");
 		std::cout << "LOAD DLL" << std::endl;
 		return true;
 #else

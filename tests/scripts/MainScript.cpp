@@ -44,8 +44,15 @@ void MainScript::Benchmark() {
 		refl::uClass uClss = reflect->CreateUClass("TestScript");
 		int getNum = uClss.CallFunction<int>("GetNumber", 823, false);
 		assert(getNum == -823);
+		
 		int* getInt2 = uClss.CallFunction<int*>("GetInt2");
 		assert(*getInt2 == -20);
+		refl::uClass _cls = uClss.GetMember<refl::uClass>("classTwo");
+		assert(_cls.GetMember<int>("i") == 25);
+		_cls.GetMember<int>("i") = 50;
+		assert(_cls.GetMember<int>("i") == 50);
+		_cls.GetMember<int>("i") = 33;
+		assert(_cls.GetMember<int>("i") == 33);
 		std::vector<int> vec = uClss.GetMember<std::vector<int>>("vec");
 		assert(vec == std::vector<int>({1}) );
 		const int& __iptr = uClss.GetMember<int>("int2");
@@ -72,6 +79,12 @@ void MainScript::Benchmark() {
 		assert(iRefCheck == 10);
 		iRef = 18832;
 		assert(18832 ==  uClss.CallFunction<int&>("GetIntRef", iRefCheck));
+
+		char** ptrPtr = uClss.GetMember<char**>("doublePtr");
+		for (int i =0 ; i < 5; i++) {
+			std::cout << ptrPtr[i] << std::endl;
+		}
+
 		std::cout << "Test 1 Passed" << std::endl;
 	} 
 	catch (std::exception& e) 

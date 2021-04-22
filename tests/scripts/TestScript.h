@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <iostream>
+#include <cstring>
 
 
 struct TestStruct {
@@ -16,11 +17,14 @@ UCLASS()
 class ClassTwo {
     public:
     UCONSTRUCTOR()
-    inline ClassTwo() {};
+    inline ClassTwo(int i) : i(i) {};
     inline ~ClassTwo() {};
 
     UFUNCTION()
     inline void TestFunc() {};
+
+    UPROPERTY() 
+    int i = 12;
 
     UPROPERTY()
     int testProperty = 5;
@@ -32,8 +36,23 @@ class TestScript : public NativeScript {
     public:
 
     UCONSTRUCTOR()
-    inline TestScript() {  };
-    inline ~TestScript() {  };
+    inline TestScript() {  
+        
+        doublePtr = (char**)malloc(sizeof(char*)*5);
+        for (int i = 0; i < 5; i++) {
+            std::string str = "TEST STRING: " + std::to_string(i);
+            doublePtr[i] = (char*)calloc( str.size()+1,sizeof(char));
+            memcpy(doublePtr[i], str.data(), str.size());
+        }
+
+    };
+    inline ~TestScript() { 
+        for (int i = 0; i < 5; i++) {
+            free(doublePtr[i]);
+        }
+        free(doublePtr);
+
+    };
 
     UFUNCTION()
     virtual inline void Update() override {};
@@ -124,6 +143,12 @@ class TestScript : public NativeScript {
         return TestScript();
     }
 */
+
+    UPROPERTY()
+    char** doublePtr = nullptr;
+
+    UPROPERTY()
+    ClassTwo classTwo = ClassTwo(25);
 
     UFUNCTION()
     static inline std::string& StaticFunc(int i, std::string& s) {std::cout << "STATIC FUNC " << s << std::endl; s = "POOP"; return s;}

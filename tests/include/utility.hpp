@@ -17,9 +17,11 @@
 using dllptr = HMODULE;
 using addrptr = FARPROC;
 using ret_err = DWORD;
+
+#endif
+
 #define MS_xstr(a) MS_str(a)
 #define MS_str(a) #a
-#endif
 
 #if defined(__APPLE__)
 #include <sys/types.h>
@@ -144,7 +146,7 @@ namespace sys {
 		return exec_command(cmd);
 	}
 
-	inline std::string compile_proj(const std::string& dir, const std::string& file) {
+	inline std::string compile_proj(const std::string& dir, const std::string& file, const std::string& CXX = "") {
 		::std::string cmd = "";
 #ifdef _WIN32
 		std::string _msBin = MS_xstr(MS_BUILD_BIN);
@@ -152,7 +154,7 @@ namespace sys {
 		cmd += _msBin + "\\MSBuild.exe\" \"" + dir + file + ".vcxproj\" /verbosity:quiet /nologo ";
 #endif
 #if defined (__linux__) || defined (__APPLE__)
-		cmd += "cd " + dir + " && make -s "+file + " ";
+		cmd += "cd " + dir + " && "+MS_xstr(COMPILER)+" "+file + " ";
 #endif
 		const std::string config = BUILD_CONFIG;
 		if (config == "Release") {
@@ -403,15 +405,15 @@ namespace files {
 }
 
 
-inline void __LoadLib(dllptr* lib, refl::reflector& r) {
+inline void __LoadLib(dllptr* lib, refl::reflector& r, const std::string& name) {
 	if (*lib) {
 		std::cout << "LIB ALREADY LOADED" << std::endl;
 		return;
 	}
 	
-	std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName((_renameDLL ? __DLL_prefix : "" )+"Reflection_Tests_Scripts");
+	std::string loc = files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName((_renameDLL ? __DLL_prefix : "" )+name);
 	if (_renameDLL) {
-		std::ifstream src(files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName("Reflection_Tests_Scripts"), std::ios::binary);
+		std::ifstream src(files::GetParentExecuteableDir(0) + dll::GetDLLExtensionName(name), std::ios::binary);
 
 		std::ofstream  dst(loc, std::ios::binary);
 		dst << src.rdbuf();
