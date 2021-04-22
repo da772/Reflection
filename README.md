@@ -99,4 +99,5 @@ Platforms
 Tested and Compiled with
 - GCC 4.2.1
 - APPLE CLANG 12.0.0
+- UBUNTU CLANG 10.0.0
 - MSBUILD (VS2019,VS2018)
