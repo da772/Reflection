@@ -160,13 +160,14 @@ namespace sys {
 #if defined (__linux__) || defined (__APPLE__) || defined(COMPILER)
 		cmd += "cd " + dir + " && "+MS_xstr(COMPILER)+" "+file + " ";
 #endif
-			const std::string config = MS_xstr(BUILD_CONFIG);;
+			std::string config = MS_xstr(BUILD_CONFIG);
 
-		if (config.size() > 0) {
+		if (config.size() > 2) {
 #if defined (__linux__) || defined (__APPLE__)
-			std::transform(config.begin(), config.end(), config.begin(),
-				[](unsigned char c) { return std::tolower(c); });
-			cmd += "config=" + config;
+			std::locale loc;
+			for(int i = 0; i < config.size(); i++)
+				config[i] = (char)std::tolower(config[i],loc);
+			//cmd += "config=" + config;
 #endif
 
 #ifdef _WIN32
