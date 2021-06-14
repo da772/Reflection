@@ -81,6 +81,7 @@ namespace refl {
 					s+="}, {\n";
 					
 					pos = in.find("UCONSTRUCTOR()");
+					bool constructorFound = false;
 					while (pos != std::string::npos) {
 						impl::ufunction f = impl::get_constructor(in, cls, &pos, err, false);
 						s+= "\t\t{\""+cls+"\",{\""+cls+"\",\""+f.ret_name+"\",static_cast<refl::store::uproperty_type>("
@@ -96,9 +97,10 @@ namespace refl {
 						s +=");} }},\n";
 						s+= "\t\t{\"~"+cls+"\",{\"~"+cls+"\",\"void\",static_cast<refl::store::uproperty_type>("+std::to_string(static_cast<uint32_t>(store::GetTypeInt("void")))+"),{},";
 						s+= "[](void* ptr, std::vector<void*> args) {"+cls+"* p = ("+cls+"*)ptr; delete p; return nullptr;} }}";
+						constructorFound = true;
 					}
 					pos = in.find("UFUNCTION()");
-					if (pos != std::string::npos) s+= ",\n";
+					if (pos != std::string::npos && constructorFound) s+= ",\n";
 					while (pos != std::string::npos) {
 						impl::ufunction f = impl::get_next_method(in, cls, &pos, err, false);
 						const ::refl::store::uproperty_type ret_ptype = static_cast<::refl::store::uproperty_type>(static_cast<uint32_t>(f.ret_val));

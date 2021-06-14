@@ -454,6 +454,7 @@ inline void __UnloadLib(dllptr* lib, refl::reflector& r) {
 
 inline void __GenerateLib(const std::string& path, const std::string& name, refl::reflector& r) {
 	std::string in = path+name;
+	std::cout << "GENERATING: " << in <<std::endl;
 	std::ifstream t(in);
 	std::stringstream buffer;
 	buffer << t.rdbuf();
