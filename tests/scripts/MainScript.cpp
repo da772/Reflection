@@ -90,7 +90,7 @@ void MainScript::Benchmark() {
 		int staticInt = reflect->CallStaticFunction<int>("StaticClass","StaticFunction");
 		assert(0xDEAD == staticInt);
 		
-		std::cout << "Test 1 Passed" << std::endl;
+		std::cout << "Test 1 Passed!!" << std::endl;
 	} 
 	catch (std::exception& e) 
 	{
