@@ -2,6 +2,7 @@
 
 #include "NativeScript.h"
 
+
 UCLASS()
 class StaticClass {
 

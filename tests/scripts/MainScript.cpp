@@ -73,6 +73,27 @@ void MainScript::Benchmark() {
 		uint32_t id = exampleScript.GetMember<uint32_t>("id");
 		assert(id == 42069);
 		uClss.CallFunction<void>("Begin");
+
+		int parentFunc = uClss.CallFunction<int>("ParentFunc");
+
+		assert(parentFunc == 0xDAD);
+
+		int& parentProp = uClss.GetMember<int&>("parentProperty");
+		assert(parentProp == 0xD3AD);
+
+		int& basedProp = uClss.GetMember<int&>("basedProperty");
+		assert(basedProp == 0xBA5ED * 2);
+
+		int basedFunc = uClss.CallFunction<int>("BasedFunc");
+		assert(basedFunc == 0xBA5ED);
+
+
+		int& mostBasedProp = uClss.GetMember<int&>("mostBasedProperty");
+		assert(mostBasedProp == 0xBA5ED * 3);
+
+		int mostBasedFunc = uClss.CallFunction<int>("MostBasedFunc");
+		assert(mostBasedFunc == 0xBA5ED*2);
+
 		void* v = uClss.CallFunction<void*>("GetVoidPtr");
 		assert((*(bool*)v) == false);
 		int iRefCheck = 0;

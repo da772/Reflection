@@ -24,8 +24,11 @@ int main() {
 	std::vector<std::string> scriptFiles = {"TestScript.h", "ExampleScript.h", "MainScript.h", "StaticScript.h"};
 	refl::reflector reflect = refl::reflector();
 	reflect.SetErrorCallback([](const char* c) { std::cout << c << std::endl; });
-
+#ifdef _MSC_VER 
+	reflect.SetOutputDir((files::GetParentExecuteableDir(3) + std::string("tests/scripts/Generated/")).c_str());
+#else 
 	reflect.SetOutputDir((files::GetParentExecuteableDir(2) + std::string("tests/scripts/Generated/")).c_str());
+#endif
 	reflect.SetRelativeInclude("../");
 	bool init = ReloadLib(&lib, reflect, scriptFiles);
 	while (!init) {
@@ -74,8 +77,15 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 		}
 		reflect.Clear();
 		for (const std::string& s : scriptFiles) {
+#ifdef _MSC_VER 
+			__GenerateLib((files::GetParentExecuteableDir(3) + "tests/scripts/"), s, reflect);
+			
+#else 
 			__GenerateLib((files::GetParentExecuteableDir(2) + "tests/scripts/"), s, reflect);
+#endif
 		}
+
+		reflect.GenerateClasses();
 		//std::string buildOut = sys::build_proj(files::GetParentExecuteableDir(3), "GenerateMake");
 		//if (buildOut.size() > 0) {
 		//	std::cout << buildOut << std::endl;
@@ -83,7 +93,12 @@ static bool ReloadLib(dllptr* lib, refl::reflector& reflect, const std::vector<s
 		std::cout << "Build Complete...\n" << std::endl;
 		std::string pathDir = files::GetParentExecuteableDir(1);
 		#if defined(_WIN32) && !defined(COMPILER)
-		pathDir = files::GetParentExecuteableDir(2) + "scripts/";
+#ifdef _MSC_VER
+		pathDir = files::GetParentExecuteableDir(3) + "tests/scripts/";
+#else 
+		pathDir = files::GetParentExecuteableDir(2) + "tests/scripts/";
+#endif
+		
 		#endif
 		std::string compileOut = sys::compile_proj(pathDir, "Scripts", "make");
 		if (compileOut.size() > 0) {

@@ -1,7 +1,6 @@
 #pragma once
 #include "error.hpp"
 #include "storage.hpp"
-#include "generation.hpp"
 #include "generate.hpp"
 
 #if defined(_MSC_VER)
@@ -176,7 +175,8 @@ namespace refl {
 		public:
 			inline reflector() : err(), gen(&err), st(&err) {}
 			inline ~reflector() { }
-			inline void Generate(const char* in){ gen.generate(in);}
+			inline void LoadClasses(const char* in){ gen.load_classes(in);}
+			inline void GenerateClasses() { gen.generate_files(); }
 			inline void Clear(){ gen.clear();}
 			inline void SetErrorCallback(void(*f)(const char*)) { err.setErrorCallback(f); }			
 			inline bool HasError() const { return err.HasError(); }

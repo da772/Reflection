@@ -31,13 +31,13 @@ class ClassTwo {
 };
 
 UCLASS()
-class TestScript : public NativeScript {
+class TestScript : public NativeScript, public BaseClass {
     UCLASS_BODY()
     public:
 
     UCONSTRUCTOR()
     inline TestScript() {  
-        
+        std::cout << this->parentProperty << std::endl;
         doublePtr = (char**)malloc(sizeof(char*)*5);
         for (int i = 0; i < 5; i++) {
             std::string str = "TEST STRING: " + std::to_string(i);
@@ -56,6 +56,8 @@ class TestScript : public NativeScript {
 
     UFUNCTION()
     virtual inline void Update() override {};
+	UFUNCTION()
+	virtual inline void Begin() override {};
     UFUNCTION()
     virtual inline void End() override {};
 
@@ -84,9 +86,6 @@ class TestScript : public NativeScript {
 
     UPROPERTY()
     TestStruct myStruct; 
-
-    UFUNCTION()
-    virtual inline void Begin() override { };
 
     UFUNCTION()
     Entity* GetEntity() { return new Entity();}

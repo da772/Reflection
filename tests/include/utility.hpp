@@ -430,7 +430,7 @@ inline void __LoadLib(dllptr* lib, refl::reflector& r, const std::string& name) 
 	
 	void (*func_ptr)(::refl::store::storage*) = reinterpret_cast<void (*)(::refl::store::storage*)>(dll::dlsym(*lib, "__ReflectionMap__loadGeneratedFiles"));
 	if (!func_ptr) {
-		std::cout << "COULD NOT LOAD SYMBOL" << std::endl;
+		std::cout << "COULD NOT LOAD SYMBOL " << std::endl;
 		dll::dlclose(*lib);
 		lib = 0;
 		return;
@@ -459,7 +459,7 @@ inline void __GenerateLib(const std::string& path, const std::string& name, refl
 	std::stringstream buffer;
 	buffer << t.rdbuf();
 	std::cout << in << std::endl;
-	r.Generate(in.c_str());
+	r.LoadClasses(in.c_str());
 	if (r.HasError()) {
 		std::cout << r.GetError() << std::endl;
 	}

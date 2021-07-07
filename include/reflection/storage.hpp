@@ -14,6 +14,10 @@ namespace refl {
         {
             return (char*)&((T*)nullptr->*member) - (char*)nullptr;
         }
+
+        
+        
+
             
         enum class uproperty_type : uint32_t {
             NONE = 0, uclass, uclass_ptr, _void, _bool, _int, _uint, _char, _uchar, _ptr, _int8_t, _int16_t, _int32_t, _int64_t, _uint8_t,
