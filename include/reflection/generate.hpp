@@ -263,10 +263,26 @@ namespace refl {
 								else s += f.ret_name + " v = " + cls + "::" + f.name + "(";
 								s += impl::set_method_args(f);
 								s += "); " + f.ret_name + "* _ptr = new " + f.ret_name + "(v); return (void*)_ptr; } }}";
-							}
+							}	
 
 							if (i != funcs.size()-1) s += ",\n";
 						}
+						s += "}, {";
+
+						{
+							std::vector<std::string> parents = _class.second.parents;
+							for (int i = 0; i < parents.size(); i++) {
+								s += "\""+parents[i]+"\"";
+								const auto& it = data.find(parents[i]);
+								if (it == data.end()) {
+									if (i != parents.size() - 1) s += ", ";
+									continue;
+								};
+								parents.insert(parents.end(), it->second.parents.begin(), it->second.parents.end());
+								if (i != parents.size() - 1) s += ", ";
+							}
+						}
+
 						s += "}});\n";
 						s += "\t}\n\tinline static void Unload(::refl::store::storage* storage) {\n";
 						s += "\t\tstorage->discard(\"" + cls + "\");\n\t}\n";
